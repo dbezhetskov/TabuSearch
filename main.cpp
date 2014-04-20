@@ -1,35 +1,34 @@
-#include "TaskData.hpp"
-#include "VectorSolution.hpp"
+#include "InitialStandardData/TaskData.hpp"
+#include "Solution/VectorSolution.hpp"
 
 // TABU SEARCHS
-#include "SimpleTabuSearch.hpp"
-#include "MixTwoNeighborhoodOneTabuListTabuSearch.hpp"
-#include "SimpleAssignmentProblemTabuSearch.hpp"
+#include "TabuSearchStrategy/SimpleTabuSearch.hpp"
+#include "TabuSearchStrategy/SimpleAssignmentProblemTabuSearch.hpp"
 
 // ASPIRATION CRITERIA
-#include "BestEverAspirationCriteria.hpp"
+#include "AspirationCriteria/BestEverAspirationCriteria.hpp"
 
 // TABU LISTS
-#include "HashSetTabuList.hpp"
+#include "TabuList/HashSetTabuList.hpp"
 
 // NEIGHBORHOODS
-#include "MoveNeighborhood.hpp"
-#include "RandomMoveNeighborhood.hpp"
-#include "SwapNeighborhood.hpp"
-#include "RandomSwapNeighborhood.hpp"
-#include "AssignmentProblemRandomNeighborhood.hpp"
-#include "UnionNeighborhood.hpp"
+#include "Neighborhood/MoveNeighborhood.hpp"
+#include "Neighborhood/RandomMoveNeighborhood.hpp"
+#include "Neighborhood/SwapNeighborhood.hpp"
+#include "Neighborhood/RandomSwapNeighborhood.hpp"
+#include "Neighborhood/AssignmentProblem/AssignmentProblemRandomNeighborhood.hpp"
+#include "Neighborhood/UnionNeighborhood.hpp"
 
 // Assignment Problem policy - to do with factory
-#include "RandomGetterDisks.hpp"
-#include "RandomGetterServers.hpp"
-#include "RandomOneDiskByServerGetter.hpp"
+#include "Neighborhood/AssignmentProblem/RandomGetterDisks.hpp"
+#include "Neighborhood/AssignmentProblem/RandomGetterServers.hpp"
+#include "Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.hpp"
 
 #include <iostream>
 #include <memory>
 #include <utility>
 
-#include "SimpleMove.hpp"
+#include "Move/SimpleMove.hpp"
 
 int main()
 {

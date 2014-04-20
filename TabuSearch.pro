@@ -13,57 +13,55 @@ CONFIG   += console
 CONFIG   -= app_bundle
 
 QMAKE_CXXFLAGS += -std=c++11
-QMAKE_CFLAGS_RELEASE    = -O3
+QMAKE_CFLAGS_RELEASE    = -O2
 
 TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    VectorSolution.cpp \
-    TaskData.cpp \
-    HashSetTabuList.cpp \
-    BestEverAspirationCriteria.cpp \
-    RandomMoveNeighborhood.cpp \
-    MoveNeighborhood.cpp \
-    SimpleMove.cpp \
-    RandomAlignmentNeighborhood.cpp \
-    CompoundMove.cpp \
-    SwapNeighborhood.cpp \
-    RandomSwapNeighborhood.cpp \
-    UnionNeighborhood.cpp \
-    RandomGetterServers.cpp \
-    RandomGetterDisks.cpp \
-    RandomOneDiskByServerGetter.cpp
+    Solution/VectorSolution.cpp \
+    InitialStandardData/TaskData.cpp \
+    TabuList/HashSetTabuList.cpp \
+    AspirationCriteria/BestEverAspirationCriteria.cpp \
+    Neighborhood/RandomMoveNeighborhood.cpp \
+    Neighborhood/MoveNeighborhood.cpp \
+    Move/SimpleMove.cpp \
+    Neighborhood/RandomAlignmentNeighborhood.cpp \
+    Move/CompoundMove.cpp \
+    Neighborhood/SwapNeighborhood.cpp \
+    Neighborhood/RandomSwapNeighborhood.cpp \
+    Neighborhood/UnionNeighborhood.cpp \
+    Neighborhood/AssignmentProblem/RandomGetterServers.cpp \
+    Neighborhood/AssignmentProblem/RandomGetterDisks.cpp \
+    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.cpp
 
 HEADERS += \
-    IMove.hpp \
-    INeighborhood.hpp \
-    ISolution.hpp \
-    VectorSolution.hpp \
-    SimpleTabuSearch.hpp \
-    TaskData.hpp \
-    ITabuList.hpp \
-    HashSetTabuList.hpp \
-    SimpleTabuSearch-inl.hpp \
-    IAspirationCriteria.hpp \
-    BestEverAspirationCriteria.hpp \
-    RandomMoveNeighborhood.hpp \
-    MoveNeighborhood.hpp \
-    SimpleMove.hpp \
-    RandomAlignmentNeighborhood.hpp \
-    CompoundMove.hpp \
-    AssignmentProblemRandomNeighborhood.hpp \
-    SwapNeighborhood.hpp \
-    RandomSwapNeighborhood.hpp \
-    IChangeableSizeNeighborhood.hpp \
-    MixTwoNeighborhoodOneTabuListTabuSearch.hpp \
-    MixTwoNeighborhoodOneTabuListTabuSearch-inl.hpp \
-    SimpleAssignmentProblemTabuSearch.hpp \
-    SimpleAssignmentProblemTabuSearch-inl.hpp \
-    UnionNeighborhood.hpp \
-    AssignmentProblemRandomNeighborhood-inl.hpp \
-    RandomGetterServers.hpp \
-    IGetterServers.hpp \
-    IGetterDisks.hpp \
-    RandomGetterDisks.hpp \
-    RandomOneDiskByServerGetter.hpp
+    Move/IMove.hpp \
+    Neighborhood/INeighborhood.hpp \
+    Solution/ISolution.hpp \
+    Solution/VectorSolution.hpp \
+    TabuSearchStrategy/SimpleTabuSearch.hpp \
+    InitialStandardData/TaskData.hpp \
+    TabuList/ITabuList.hpp \
+    TabuList/HashSetTabuList.hpp \
+    TabuSearchStrategy/SimpleTabuSearch-inl.hpp \
+    AspirationCriteria/IAspirationCriteria.hpp \
+    AspirationCriteria/BestEverAspirationCriteria.hpp \
+    Neighborhood/RandomMoveNeighborhood.hpp \
+    Move/MoveNeighborhood.hpp \
+    Move/SimpleMove.hpp \
+    Neighborhood/RandomAlignmentNeighborhood.hpp \
+    Move/CompoundMove.hpp \
+    Neighborhood/AssignmentProblem/AssignmentProblemRandomNeighborhood.hpp \
+    Neighborhood/SwapNeighborhood.hpp \
+    Neighborhood/RandomSwapNeighborhood.hpp \
+    Neighborhood/IChangeableSizeNeighborhood.hpp \
+    TabuSearchStrategy/SimpleAssignmentProblemTabuSearch.hpp \
+    TabuSearchStrategy/SimpleAssignmentProblemTabuSearch-inl.hpp \
+    Neighborhood/UnionNeighborhood.hpp \
+    Neighborhood/AssignmentProblem/AssignmentProblemRandomNeighborhood-inl.hpp \
+    Neighborhood/AssignmentProblem/RandomGetterServers.hpp \
+    Neighborhood/AssignmentProblem/IGetterServers.hpp \
+    Neighborhood/AssignmentProblem/IGetterDisks.hpp \
+    Neighborhood/AssignmentProblem/RandomGetterDisks.hpp \
+    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.hpp
