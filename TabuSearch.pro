@@ -15,6 +15,8 @@ CONFIG   -= app_bundle
 QMAKE_CXXFLAGS += -std=c++11
 QMAKE_CFLAGS_RELEASE    = -O2
 
+LIBS += -pthread -Wl,--no-as-needed
+
 TEMPLATE = app
 
 
@@ -33,7 +35,8 @@ SOURCES += main.cpp \
     Neighborhood/UnionNeighborhood.cpp \
     Neighborhood/AssignmentProblem/RandomGetterServers.cpp \
     Neighborhood/AssignmentProblem/RandomGetterDisks.cpp \
-    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.cpp
+    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.cpp \
+    Neighborhood/ProportionSwap.cpp
 
 HEADERS += \
     Move/IMove.hpp \
@@ -64,4 +67,10 @@ HEADERS += \
     Neighborhood/AssignmentProblem/IGetterServers.hpp \
     Neighborhood/AssignmentProblem/IGetterDisks.hpp \
     Neighborhood/AssignmentProblem/RandomGetterDisks.hpp \
-    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.hpp
+    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.hpp \
+    Neighborhood/ProportionSwap.hpp \
+    TabuSearchStrategy/ParallelTabuSearch-inl.hpp \
+    TabuSearchStrategy/ParallelTabuSearch.hpp \
+    Scheduler/Scheduler.hpp \
+    Scheduler/Scheduler-inl.hpp \
+    Scheduler/FunctionWrapper.hpp

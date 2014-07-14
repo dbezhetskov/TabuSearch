@@ -1,9 +1,12 @@
 #include "InitialStandardData/TaskData.hpp"
 #include "Solution/VectorSolution.hpp"
 
+#include "Scheduler/Scheduler.hpp"
+
 // TABU SEARCHS
 #include "TabuSearchStrategy/SimpleTabuSearch.hpp"
 #include "TabuSearchStrategy/SimpleAssignmentProblemTabuSearch.hpp"
+#include "TabuSearchStrategy/ParallelTabuSearch.hpp"
 
 // ASPIRATION CRITERIA
 #include "AspirationCriteria/BestEverAspirationCriteria.hpp"
@@ -18,6 +21,7 @@
 #include "Neighborhood/RandomSwapNeighborhood.hpp"
 #include "Neighborhood/AssignmentProblem/AssignmentProblemRandomNeighborhood.hpp"
 #include "Neighborhood/UnionNeighborhood.hpp"
+#include "Neighborhood/ProportionSwap.hpp"
 
 // Assignment Problem policy - to do with factory
 #include "Neighborhood/AssignmentProblem/RandomGetterDisks.hpp"
@@ -27,14 +31,15 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <thread>
 
 #include "Move/SimpleMove.hpp"
 
 int main()
 {
     //========INIT========
-    const size_t MAX_STEP = 1000;
-    const size_t TENURE = 11;
+    const size_t MAX_STEP = 1;
+    const size_t TENURE = 10;
 	std::ios_base::sync_with_stdio(false);
 
     std::shared_ptr<TaskData> taskData(new TaskData());
@@ -45,20 +50,18 @@ int main()
     std::vector< std::unique_ptr<INeighborhood> > neighborhoods;
     neighborhoods.emplace_back(new MoveNeighborhood(taskData));
     neighborhoods.emplace_back(new SwapNeighborhood());
-    UnionNeighborhood unionNeighborhood(std::move(neighborhoods));
-    //AssignmentProblemRandomNeighborhood<RandomGetterServers, RandomOneDiskByServerGetter> assignmentProblemNeighborhood(*taskData, 2);
+    neighborhoods.emplace_back(new ProportionSwap(*taskData));
+    auto unionNeighborhood_ptr = std::unique_ptr<UnionNeighborhood>(new UnionNeighborhood(std::move(neighborhoods)));
+    auto tabuList_ptr = std::unique_ptr<HashSetTabuList>(new HashSetTabuList(TENURE));
+    auto aspirationCriteria_ptr = std::unique_ptr<BestEverAspirationCriteria>(new BestEverAspirationCriteria(solution.getObjectiveValue()));
 
-    HashSetTabuList tabuList(TENURE);
-    BestEverAspirationCriteria aspirationCriteria(solution.getObjectiveValue());
+//    SimpleTabuSearch<VectorSolution>
+//    tabuSearch(std::move(solution), std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
 
-    SimpleTabuSearch
-            <
-                VectorSolution,
-                UnionNeighborhood,                
-                HashSetTabuList,
-                BestEverAspirationCriteria
-            >
-    tabuSearch(std::move(solution), std::move(unionNeighborhood), std::move(tabuList), std::move(aspirationCriteria));
+    auto scheduler = std::make_shared<Scheduler>();
+    ParallelTabuSearch<VectorSolution> tabuSearch(scheduler, solution, 30000,
+                                                  std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
+
     //========INIT========
 
 
@@ -78,8 +81,7 @@ int main()
     {
         std::cout << server + 1 << ' ';
     }
-    //std::copy(distribution.begin(), distribution.end(), std::ostream_iterator<size_t>(std::cout, ""));
-    // question : how to put vector in cin with with change element
+    // --------------------------------------------------------
     //========RUN========
 
 	return 0;

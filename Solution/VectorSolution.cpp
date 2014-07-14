@@ -44,8 +44,7 @@ VectorSolution::VectorSolution(const VectorSolution& other)
     , thresholdOverheadsServerInsertRedundancy(other.thresholdOverheadsServerInsertRedundancy)
     , thresholdOverheadsServerEraseRedundancy(other.thresholdOverheadsServerEraseRedundancy)
     , objectiveValue(other.objectiveValue)
-{
-}
+{}
 
 void VectorSolution::swap(VectorSolution &other)
 {

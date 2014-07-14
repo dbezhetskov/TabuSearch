@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <iostream>
 
-template<class Solution, class Neighborhood, class TabuList, class AspirationCriteria>
-SimpleTabuSearch<Solution, Neighborhood, TabuList, AspirationCriteria>::SimpleTabuSearch
+template<class Solution>
+SimpleTabuSearch<Solution>::SimpleTabuSearch
 (
-        Solution&&                _initSolution,
-        Neighborhood&&            _neighborhood,
-        TabuList&&                _tabuList,
-        AspirationCriteria&&      _aspirationCriteria
+        Solution&&                              _initSolution,
+        std::unique_ptr<INeighborhood>&&        _neighborhood,
+        std::unique_ptr<ITabuList>&&            _tabuList,
+        std::unique_ptr<IAspirationCriteria>&&  _aspirationCriteria
 )
     : neighborhood(std::move(_neighborhood))
     , tabuList(std::move(_tabuList))
@@ -18,15 +18,15 @@ SimpleTabuSearch<Solution, Neighborhood, TabuList, AspirationCriteria>::SimpleTa
 {
 }
 
-template<class Solution, class Neighborhood, class TabuList, class AspirationCriteria>
-void SimpleTabuSearch<Solution, Neighborhood, TabuList, AspirationCriteria>::run(const size_t numberOfSteps)
+template<class Solution>
+void SimpleTabuSearch<Solution>::run(const size_t numberOfSteps)
 {
     // initialize current solution
     Solution currentSolution(bestSolution);
 
 	for (size_t i = 0; i < numberOfSteps; ++i)
 	{
-        auto moves = neighborhood.getMoves(currentSolution);
+        auto moves = neighborhood->getMoves(currentSolution);
         if (moves.empty())
         {
             std::cout << "Moves exhaustion, return in bestSolution" << std::endl;
@@ -40,7 +40,7 @@ void SimpleTabuSearch<Solution, Neighborhood, TabuList, AspirationCriteria>::run
         // generate all (non tabu and !aspiration) solutions from the current
         for (size_t i = 0; i < moves.size(); ++i)
         {
-            if (!tabuList.isTabu(*moves[i]) || aspirationCriteria.overrideTabu(currentSolution, *moves[i]))
+            if (!tabuList->isTabu(*moves[i]) || aspirationCriteria->overrideTabu(currentSolution, *moves[i]))
             {
                 objectiveValues.push_back(currentSolution.tryOnMove(*moves[i]));
                 indexs.push_back(i);
@@ -73,13 +73,13 @@ void SimpleTabuSearch<Solution, Neighborhood, TabuList, AspirationCriteria>::run
         }
 
         // update tabuList and AspirationCriteria
-        tabuList.update(*moves[indexs[idx]]);
-        aspirationCriteria.update(currentSolution);
+        tabuList->update(*moves[indexs[idx]]);
+        aspirationCriteria->update(currentSolution);
 	}
 }
 
-template<class Solution, class Neighborhood, class TabuList, class AspirationCriteria>
-Solution SimpleTabuSearch<Solution, Neighborhood, TabuList, AspirationCriteria>::getBestSolution()
+template<class Solution>
+Solution SimpleTabuSearch<Solution>::getBestSolution()
 {
     return bestSolution;
 }

@@ -7,16 +7,16 @@
 #include "TabuList/ITabuList.hpp"
 #include "AspirationCriteria/IAspirationCriteria.hpp"
 
-template<class Solution, class Neighborhood, class TabuList, class AspirationCriteria>
+template<class Solution>
 class SimpleTabuSearch : public ITabuSearch<Solution>
 {
 public:
     SimpleTabuSearch
     (
-            Solution&&              _initSolution,
-            Neighborhood&&          _neighborhood,
-            TabuList&&              _tabuList,
-            AspirationCriteria&&    _aspirationCriteria
+            Solution&&                              _initSolution,
+            std::unique_ptr<INeighborhood>&&        _neighborhood,
+            std::unique_ptr<ITabuList>&&            _tabuList,
+            std::unique_ptr<IAspirationCriteria>&&  _aspirationCriteria
     );
 
 	virtual void run(const size_t numberOfSteps) override;
@@ -24,11 +24,11 @@ public:
     virtual Solution getBestSolution() override;
 
 private:
-    Neighborhood neighborhood;
+    std::unique_ptr<INeighborhood> neighborhood;
 
-    TabuList tabuList;
+    std::unique_ptr<ITabuList> tabuList;
 
-    AspirationCriteria aspirationCriteria;
+    std::unique_ptr<IAspirationCriteria> aspirationCriteria;
 
     Solution bestSolution;
 };
