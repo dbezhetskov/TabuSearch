@@ -55,12 +55,12 @@ int main()
     auto tabuList_ptr = std::unique_ptr<HashSetTabuList>(new HashSetTabuList(TENURE));
     auto aspirationCriteria_ptr = std::unique_ptr<BestEverAspirationCriteria>(new BestEverAspirationCriteria(solution.getObjectiveValue()));
 
-//    SimpleTabuSearch<VectorSolution>
-//    tabuSearch(std::move(solution), std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
+    SimpleTabuSearch<VectorSolution>
+    tabuSearch(std::move(solution), std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
 
-    auto scheduler = std::make_shared<Scheduler>();
-    ParallelTabuSearch<VectorSolution> tabuSearch(scheduler, solution, 30000,
-                                                  std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
+//    auto scheduler = std::make_shared<Scheduler>(1);
+//    ParallelTabuSearch<VectorSolution> tabuSearch(scheduler, solution, 106000,
+//                                                  std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
 
     //========INIT========
 

@@ -20,21 +20,20 @@ Scheduler::Scheduler(unsigned number_of_threads = 0)
                 while (true)
                 {
                     std::unique_lock<std::mutex> lock(queue_mutex);
-                    while (tasks.empty() && !stop)
+                    while(!stop && tasks.empty())
                     {
                         condition.wait(lock);
                     }
 
-                    if (!tasks.empty())
+                    if (stop && tasks.empty())
                     {
-                        FunctionWrapper task = std::move(tasks.front());
-                        tasks.pop();
-                        task();
+                        return;
                     }
-                    else
-                    {
-                        break;
-                    }
+
+                    FunctionWrapper task = std::move(tasks.front());
+                    tasks.pop();
+                    lock.unlock();
+                    task();
                 }
             }
         );

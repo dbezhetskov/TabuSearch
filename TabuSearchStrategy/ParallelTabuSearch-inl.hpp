@@ -47,7 +47,7 @@ void ParallelTabuSearch<TSolution>::run(const size_t numberOfSteps)
         auto task = [](const ITabuList& tabu_list, const IAspirationCriteria& aspiration_criteria,
                 const TSolution solution, const std::vector< std::unique_ptr<IMove> >& moves, size_t first, size_t last) -> std::pair<int, double>
         {
-            std::cout << "Work " << std::this_thread::get_id() << " thread" << std::endl;
+            //std::cout << "Work " << std::this_thread::get_id() << " thread" << std::endl;
             std::vector<double> objectiveValues;
             std::vector<size_t> indexs;
 
