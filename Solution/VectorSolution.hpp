@@ -7,6 +7,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <iostream>
 
 class VectorSolution : public ISolution
 {
@@ -15,7 +16,7 @@ public:
 
     VectorSolution(const VectorSolution& other);
 
-    VectorSolution& operator=(VectorSolution& rhs);
+    VectorSolution& operator=(const VectorSolution& rhs);
 
     void swap(VectorSolution& other);
 
@@ -30,6 +31,10 @@ public:
     virtual double getObjectiveValue() const override;
 
     virtual std::vector<size_t> getDistribution() const override;
+
+    virtual std::vector<IMove::AtomMove> getMoveHistory() const override;
+
+    virtual size_t getServerForDisk(const size_t disk_id) const override;
 
 private:
     struct MatrixIdx
@@ -78,7 +83,7 @@ private:
     double fillObjectiveValueMatrix(const std::vector<size_t>& removedDisks,
                                     const std::pair<int, size_t> insertedDisk) const;
 
-    void moveDisk(size_t destination, size_t source, size_t diskId);
+    void moveDisk(size_t destination, size_t, size_t diskId);
 
     std::pair<Changes, double> tryOnAtomeMove(
             TMap *distinct
@@ -90,11 +95,11 @@ private:
 
     inline bool recalcOverheadsRedundancyByResource(const IMove::AtomMove& atomMove, const size_t resource) const;
 
-    inline bool recalcOverheadsRedundancyByResourceInverse(const IMove::AtomMove& atomMove, const size_t resource) const;
+    inline bool undoMoveRedundancy(const IMove::AtomMove& atomMove, const size_t resource) const;
 
     inline void recalcOverheads(const IMove::AtomMove& atomMove, const size_t resource);
 
-    inline void recalcOverheadsInverse(const IMove::AtomMove& atomMove, const size_t resource);
+    inline void undoMove(const IMove::AtomMove& atomMove, const size_t resource);
 
     double& getElemCapacityMatrix(TMap *distinct, size_t server, size_t time, size_t resource) const;
 
@@ -103,6 +108,8 @@ private:
     inline double& getOverheads(const TaskData::TypeOperation typeOperation, size_t server, size_t resource);
 
     inline double& getOverheadsRedundancy(const TaskData::TypeOperation typeOperation, size_t server, size_t resource) const;
+
+    friend std::ostream& operator<<(std::ostream& outStream, const VectorSolution& solution);
 
 private:
     std::shared_ptr<const TaskData> data;
@@ -121,7 +128,9 @@ private:
 
     double objectiveValue;
 
-    std::unordered_set<IMove::AtomMove, MoveHash> moves;
+    std::unordered_set<IMove::AtomMove, MoveHash> oldMoves;
+
+    std::vector<IMove::AtomMove> moveHistory;
 };
 
 inline double& VectorSolution::getElemCapacityMatrix(size_t server, size_t time, size_t resource) const

@@ -8,30 +8,32 @@
 #include "Scheduler/Scheduler.hpp"
 #include <memory>
 
-template<class TSolution>
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
 class ParallelTabuSearch : public ITabuSearch<TSolution>
 {
 public:
     ParallelTabuSearch
     (
             std::shared_ptr<Scheduler>              _scheduler,
-            TSolution                               initialSolution,
+            TSolution                               &initialSolution,
             const size_t                            _block_size,
-            std::unique_ptr<INeighborhood>&&        _neighborhood,
-            std::unique_ptr<ITabuList>&&            _tabuList,
-            std::unique_ptr<IAspirationCriteria>&&  _aspirationCriteria
+            TNeighborhood                           &_neighborhood,
+            TTabuList                               &_tabuList,
+            TAspirationCriteria                     &_aspirationCriteria
     );
 
     virtual void run(const size_t numberOfSteps) override;
 
     virtual TSolution getBestSolution() override;
 
+    virtual void setStartSolution(TSolution solution) override;
+
 private:
-    std::unique_ptr<INeighborhood> neighborhood;
+    TNeighborhood neighborhood;
 
-    std::unique_ptr<ITabuList> tabuList;
+    TTabuList tabuList;
 
-    std::unique_ptr<IAspirationCriteria> aspirationCriteria;
+    TAspirationCriteria aspirationCriteria;
 
     TSolution bestSolution;
 

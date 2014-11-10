@@ -5,15 +5,19 @@
 #include <vector>
 #include <memory>
 
+template< class TFirstNeighborhood, class TSecondNeighborhood >
 class UnionNeighborhood : public INeighborhood
 {
 public:
-    UnionNeighborhood(std::vector< std::unique_ptr<INeighborhood> >&& _neighborhoods);
+    UnionNeighborhood(const TFirstNeighborhood& first, const TSecondNeighborhood& second);
 
     virtual std::vector< std::unique_ptr<IMove> > getMoves(const ISolution& solution) const override;
 
 private:
-    std::vector< std::unique_ptr<INeighborhood> > neighborhoods;
+    const TFirstNeighborhood&   first_neighborhood;
+    const TSecondNeighborhood&  second_neighborhood;
 };
+
+#include "UnionNeighborhood-inl.hpp"
 
 #endif // UNIONNEIGHBORHOOD_HPP

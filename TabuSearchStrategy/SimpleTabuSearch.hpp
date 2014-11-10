@@ -1,36 +1,34 @@
 #ifndef _SIMPLE_TABU_SEARCH_H_
 #define _SIMPLE_TABU_SEARCH_H_
 
-#include "InitialStandardData/TaskData.hpp"
 #include "ITabuSearch.hpp"
-#include "Neighborhood/INeighborhood.hpp"
-#include "TabuList/ITabuList.hpp"
-#include "AspirationCriteria/IAspirationCriteria.hpp"
 
-template<class Solution>
-class SimpleTabuSearch : public ITabuSearch<Solution>
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+class SimpleTabuSearch : public ITabuSearch<TSolution>
 {
 public:
     SimpleTabuSearch
     (
-            Solution&&                              _initSolution,
-            std::unique_ptr<INeighborhood>&&        _neighborhood,
-            std::unique_ptr<ITabuList>&&            _tabuList,
-            std::unique_ptr<IAspirationCriteria>&&  _aspirationCriteria
+            const TSolution&                        _initSolution,
+            const TNeighborhood&                    _neighborhood,
+            const TTabuList&                        _tabuList,
+            const TAspirationCriteria&              _aspirationCriteria
     );
 
-	virtual void run(const size_t numberOfSteps) override;
+    virtual void run(const size_t number_of_steps) override;
 
-    virtual Solution getBestSolution() override;
+    virtual TSolution getBestSolution() override;
+
+    virtual void setStartSolution(TSolution solution) override;
 
 private:
-    std::unique_ptr<INeighborhood> neighborhood;
+    TNeighborhood neighborhood;
 
-    std::unique_ptr<ITabuList> tabuList;
+    TTabuList tabuList;
 
-    std::unique_ptr<IAspirationCriteria> aspirationCriteria;
+    TAspirationCriteria aspirationCriteria;
 
-    Solution bestSolution;
+    TSolution bestSolution;
 };
 
 #include "SimpleTabuSearch-inl.hpp"

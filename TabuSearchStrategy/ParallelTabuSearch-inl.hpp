@@ -10,33 +10,33 @@
 #include <cassert>
 #include <iostream>
 
-template<class TSolution>
-ParallelTabuSearch<TSolution>::ParallelTabuSearch
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::ParallelTabuSearch
 (
         std::shared_ptr<Scheduler>              _scheduler,
-        TSolution                               initialSolution,
+        TSolution                               &initialSolution,
         const size_t                            _block_size,
-        std::unique_ptr<INeighborhood>&&        _neighborhood,
-        std::unique_ptr<ITabuList>&&            _tabuList,
-        std::unique_ptr<IAspirationCriteria>&&  _aspirationCriteria
+        TNeighborhood                           &_neighborhood,
+        TTabuList                               &_tabuList,
+        TAspirationCriteria                     &_aspirationCriteria
 )
-    : neighborhood(std::move(_neighborhood))
-    , tabuList(std::move(_tabuList))
-    , aspirationCriteria(std::move(_aspirationCriteria))
+    : neighborhood(_neighborhood)
+    , tabuList(_tabuList)
+    , aspirationCriteria(_aspirationCriteria)
     , bestSolution(initialSolution)
     , scheduler(_scheduler)
     , block_size(_block_size)
 {}
 
-template<class TSolution>
-void ParallelTabuSearch<TSolution>::run(const size_t numberOfSteps)
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::run(const size_t numberOfSteps)
 {
     // initialize current solution
     TSolution currentSolution(bestSolution);
 
     for (size_t i = 0; i < numberOfSteps; ++i)
     {
-        auto moves = neighborhood->getMoves(currentSolution);
+        auto moves = neighborhood.getMoves(currentSolution);
         if (moves.empty())
         {
             std::cout << "Moves exhaustion, return in bestSolution" << std::endl;
@@ -80,7 +80,7 @@ void ParallelTabuSearch<TSolution>::run(const size_t numberOfSteps)
 
         for (size_t index_of_block = 0; index_of_block + 1 < number_of_block; ++index_of_block)
         {
-            index_of_best_moves[index_of_block] = scheduler->schedule(task, std::ref(*tabuList), std::ref(*aspirationCriteria), currentSolution,
+            index_of_best_moves[index_of_block] = scheduler->schedule(task, std::ref(tabuList), std::ref(aspirationCriteria), currentSolution,
                                                                       std::ref(moves), index_of_block * block_size, (index_of_block + 1) * block_size);
         }
         size_t last = (number_of_block - 1) * block_size + block_size;
@@ -88,8 +88,7 @@ void ParallelTabuSearch<TSolution>::run(const size_t numberOfSteps)
         {
             last = moves.size();
         }
-        auto last_index = task(*tabuList, *aspirationCriteria, currentSolution, moves,
-                                 (number_of_block - 1) * block_size, last);
+        auto last_index = task(tabuList, aspirationCriteria, currentSolution, moves, (number_of_block - 1) * block_size, last);
 
         // choice of the best solution
         int index_of_best = -1;
@@ -129,7 +128,7 @@ void ParallelTabuSearch<TSolution>::run(const size_t numberOfSteps)
 
         if (-1 == index_of_best)
         {
-            std::cout << "all moves is tabu" << std::cout;
+            std::cout << "all moves is tabu" << std::endl;
             break;
         }
 
@@ -148,15 +147,21 @@ void ParallelTabuSearch<TSolution>::run(const size_t numberOfSteps)
         }
 
         // update tabuList and AspirationCriteria
-        tabuList->update(*moves[index_of_best]);
-        aspirationCriteria->update(currentSolution);
+        tabuList.update(*moves[index_of_best]);
+        aspirationCriteria.update(currentSolution);
     }
 }
 
-template<class TSolution>
-TSolution ParallelTabuSearch<TSolution>::getBestSolution()
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+TSolution ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::getBestSolution()
 {
     return bestSolution;
+}
+
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::setStartSolution(TSolution solution)
+{
+    bestSolution = solution;
 }
 
 #endif // PARALLELTABUSEARCHINL_HPP

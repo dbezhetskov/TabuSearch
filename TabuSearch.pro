@@ -4,21 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += core
-
-QT       -= gui
-
-TARGET = TabuSearch
-CONFIG   += console
-CONFIG   -= app_bundle
-
 QMAKE_CXXFLAGS += -std=c++11
 QMAKE_CFLAGS_RELEASE    = -O2
 
 LIBS += -pthread -Wl,--no-as-needed
-
-TEMPLATE = app
-
 
 SOURCES += main.cpp \
     Solution/VectorSolution.cpp \
@@ -32,7 +21,6 @@ SOURCES += main.cpp \
     Move/CompoundMove.cpp \
     Neighborhood/SwapNeighborhood.cpp \
     Neighborhood/RandomSwapNeighborhood.cpp \
-    Neighborhood/UnionNeighborhood.cpp \
     Neighborhood/AssignmentProblem/RandomGetterServers.cpp \
     Neighborhood/AssignmentProblem/RandomGetterDisks.cpp \
     Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.cpp \
@@ -59,6 +47,7 @@ HEADERS += \
     Neighborhood/SwapNeighborhood.hpp \
     Neighborhood/RandomSwapNeighborhood.hpp \
     Neighborhood/IChangeableSizeNeighborhood.hpp \
+    TabuSearchStrategy/ITabuSearch.hpp \
     TabuSearchStrategy/SimpleAssignmentProblemTabuSearch.hpp \
     TabuSearchStrategy/SimpleAssignmentProblemTabuSearch-inl.hpp \
     Neighborhood/UnionNeighborhood.hpp \
@@ -73,4 +62,7 @@ HEADERS += \
     TabuSearchStrategy/ParallelTabuSearch.hpp \
     Scheduler/Scheduler.hpp \
     Scheduler/Scheduler-inl.hpp \
-    Scheduler/FunctionWrapper.hpp
+    Scheduler/FunctionWrapper.hpp \
+    TabuSearchStrategy/LandingTabuSearch.hpp \
+    TabuSearchStrategy/LandingTabuSearch-inl.hpp \
+    Neighborhood/UnionNeighborhood-inl.hpp

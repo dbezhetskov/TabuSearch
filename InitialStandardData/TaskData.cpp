@@ -45,6 +45,10 @@ namespace
 
 std::istream& operator>>(std::istream& stream, TaskData& taskData)
 {
+    // skip fisrt number of steps
+    int t = 0;
+    stream >> t;
+
 	stream >> taskData.numberOfDisks
 		>> taskData.numberOfServers
 		>> taskData.numberOfResource
@@ -62,7 +66,7 @@ std::istream& operator>>(std::istream& stream, TaskData& taskData)
 
 	readThreeDimensionalMatrix(&taskData.disksOverheadErase, taskData.numberOfServers, taskData.numberOfDisks, taskData.numberOfResource, &stream);
 
-	readVector(&taskData.initialDistribution, taskData.numberOfDisks, &stream);
+    readVector(&taskData.initialDistribution, taskData.numberOfDisks, &stream);
 
     // numbering from zero
     for (auto& disk : taskData.initialDistribution)

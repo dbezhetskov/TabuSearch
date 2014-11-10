@@ -3,33 +3,33 @@
 #include <algorithm>
 #include <iostream>
 
-template<class Solution>
-SimpleTabuSearch<Solution>::SimpleTabuSearch
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+SimpleTabuSearch<TSolution, TNeighborhood, TTabuList, TAspirationCriteria>::SimpleTabuSearch
 (
-        Solution&&                              _initSolution,
-        std::unique_ptr<INeighborhood>&&        _neighborhood,
-        std::unique_ptr<ITabuList>&&            _tabuList,
-        std::unique_ptr<IAspirationCriteria>&&  _aspirationCriteria
+        const TSolution&                        _initSolution,
+        const TNeighborhood&                    _neighborhood,
+        const TTabuList&                        _tabuList,
+        const TAspirationCriteria&              _aspirationCriteria
 )
-    : neighborhood(std::move(_neighborhood))
-    , tabuList(std::move(_tabuList))
-    , aspirationCriteria(std::move(_aspirationCriteria))
-    , bestSolution(std::move(_initSolution))
+    : neighborhood(_neighborhood)
+    , tabuList(_tabuList)
+    , aspirationCriteria(_aspirationCriteria)
+    , bestSolution(_initSolution)
 {
 }
 
-template<class Solution>
-void SimpleTabuSearch<Solution>::run(const size_t numberOfSteps)
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+void SimpleTabuSearch<TSolution, TNeighborhood, TTabuList, TAspirationCriteria>::run(const size_t number_of_steps)
 {
     // initialize current solution
-    Solution currentSolution(bestSolution);
+    TSolution currentSolution(bestSolution);
 
-	for (size_t i = 0; i < numberOfSteps; ++i)
+    for (size_t i = 0; i < number_of_steps; ++i)
 	{
-        auto moves = neighborhood->getMoves(currentSolution);
+        auto moves = neighborhood.getMoves(currentSolution);
         if (moves.empty())
         {
-            std::cout << "Moves exhaustion, return in bestSolution" << std::endl;
+            std::cout << "Moves exhaustion, return in bestSolution" << '\n';
             currentSolution = bestSolution;
             continue;
         }
@@ -40,7 +40,7 @@ void SimpleTabuSearch<Solution>::run(const size_t numberOfSteps)
         // generate all (non tabu and !aspiration) solutions from the current
         for (size_t i = 0; i < moves.size(); ++i)
         {
-            if (!tabuList->isTabu(*moves[i]) || aspirationCriteria->overrideTabu(currentSolution, *moves[i]))
+            if (!tabuList.isTabu(*moves[i]) || aspirationCriteria.overrideTabu(currentSolution, *moves[i]))
             {
                 objectiveValues.push_back(currentSolution.tryOnMove(*moves[i]));
                 indexs.push_back(i);
@@ -49,7 +49,7 @@ void SimpleTabuSearch<Solution>::run(const size_t numberOfSteps)
 
         if (objectiveValues.empty())
         {
-            std::cout << "All solution tabu!" << std::endl;
+            std::cout << "All solution tabu!" << '\n';
             continue;
         }
 
@@ -60,7 +60,7 @@ void SimpleTabuSearch<Solution>::run(const size_t numberOfSteps)
         size_t idx = std::distance(objectiveValues.begin(), localBestIterator);
         currentSolution.applyMove(*moves[indexs[idx]]);
 
-        std::cout << *localBestIterator << std::endl;
+        std::cout << *localBestIterator << '\n';
 
         if (*localBestIterator <= bestSolution.getObjectiveValue())
         {
@@ -73,13 +73,19 @@ void SimpleTabuSearch<Solution>::run(const size_t numberOfSteps)
         }
 
         // update tabuList and AspirationCriteria
-        tabuList->update(*moves[indexs[idx]]);
-        aspirationCriteria->update(currentSolution);
+        tabuList.update(*moves[indexs[idx]]);
+        aspirationCriteria.update(currentSolution);
 	}
 }
 
-template<class Solution>
-Solution SimpleTabuSearch<Solution>::getBestSolution()
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+TSolution SimpleTabuSearch<TSolution, TNeighborhood, TTabuList, TAspirationCriteria>::getBestSolution()
 {
     return bestSolution;
+}
+
+template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+void SimpleTabuSearch<TSolution, TNeighborhood, TTabuList, TAspirationCriteria>::setStartSolution(TSolution solution)
+{
+    bestSolution = solution;
 }

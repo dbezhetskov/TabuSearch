@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <iostream>
 
 class IMove
 {
@@ -26,6 +27,12 @@ public:
         size_t destination;
         size_t source;
         size_t diskId;
+
+    private:
+        friend std::ostream& operator<<(std::ostream& outStream, const AtomMove& atomMove)
+        {
+            return (outStream << "move " << atomMove.destination << ' ' << atomMove.source << ' ' << atomMove.diskId);
+        }
     };
 
 public:

@@ -7,6 +7,7 @@
 #include "TabuSearchStrategy/SimpleTabuSearch.hpp"
 #include "TabuSearchStrategy/SimpleAssignmentProblemTabuSearch.hpp"
 #include "TabuSearchStrategy/ParallelTabuSearch.hpp"
+#include "TabuSearchStrategy/LandingTabuSearch.hpp"
 
 // ASPIRATION CRITERIA
 #include "AspirationCriteria/BestEverAspirationCriteria.hpp"
@@ -32,57 +33,61 @@
 #include <memory>
 #include <utility>
 #include <thread>
+#include <chrono>
 
-#include "Move/SimpleMove.hpp"
+static void run(ITabuSearch<VectorSolution>* tabu_search, const size_t MAX_STEP);
 
 int main()
 {
+    // measure: how different random solution in depend DEPTH
+
     //========INIT========
-    const size_t MAX_STEP = 1;
-    const size_t TENURE = 10;
+    const size_t MAX_STEP = 2;
+    const size_t TENURE = 17;
 	std::ios_base::sync_with_stdio(false);
 
-    std::shared_ptr<TaskData> taskData(new TaskData());
+    std::shared_ptr< TaskData > taskData(new TaskData());
     std::cin >> *taskData;
 
     VectorSolution solution(taskData);
 
-    std::vector< std::unique_ptr<INeighborhood> > neighborhoods;
-    neighborhoods.emplace_back(new MoveNeighborhood(taskData));
-    neighborhoods.emplace_back(new SwapNeighborhood());
-    neighborhoods.emplace_back(new ProportionSwap(*taskData));
-    auto unionNeighborhood_ptr = std::unique_ptr<UnionNeighborhood>(new UnionNeighborhood(std::move(neighborhoods)));
-    auto tabuList_ptr = std::unique_ptr<HashSetTabuList>(new HashSetTabuList(TENURE));
-    auto aspirationCriteria_ptr = std::unique_ptr<BestEverAspirationCriteria>(new BestEverAspirationCriteria(solution.getObjectiveValue()));
+    auto move_neighborhood = MoveNeighborhood(taskData);
+    auto swap_neighborhood = SwapNeighborhood();
 
-    SimpleTabuSearch<VectorSolution>
-    tabuSearch(std::move(solution), std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
+    typedef UnionNeighborhood<MoveNeighborhood, SwapNeighborhood> UnionNeighborhoodType;
+    auto union_neighborhood = UnionNeighborhoodType(move_neighborhood, swap_neighborhood);
+    auto tabu_list = HashSetTabuList(TENURE);
+    auto aspiration_criteria = BestEverAspirationCriteria(solution.getObjectiveValue());
 
-//    auto scheduler = std::make_shared<Scheduler>(1);
-//    ParallelTabuSearch<VectorSolution> tabuSearch(scheduler, solution, 106000,
-//                                                  std::move(unionNeighborhood_ptr), std::move(tabuList_ptr), std::move(aspirationCriteria_ptr));
+//    typedef SimpleTabuSearch < VectorSolution, UnionNeighborhoodType, HashSetTabuList, BestEverAspirationCriteria > SimpleTabuSearchMoveSwap;
 
+//    SimpleTabuSearchMoveSwap tabu_search(solution, union_neighborhood, tabu_list, aspiration_criteria);
+
+    auto scheduler = std::make_shared<Scheduler>();
+    typedef ParallelTabuSearch < VectorSolution, UnionNeighborhoodType, HashSetTabuList, BestEverAspirationCriteria > ParallelTabuSearchMoveSwap;
+
+    ParallelTabuSearchMoveSwap tabu_search(scheduler, solution, 500, union_neighborhood, tabu_list, aspiration_criteria);
+
+//    const size_t NUMBER_OF_LANDING = 3;
+//    const size_t DEPTH = 30;
+//    auto scheduler = std::make_shared<Scheduler>();
+//    LandingTabuSearch<VectorSolution, SimpleTabuSearchMoveSwap > tabu_search(
+//                NUMBER_OF_LANDING, DEPTH, scheduler, scout_tabu_search, solution, taskData
+//    );
+
+    run(&tabu_search, MAX_STEP);
     //========INIT========
 
-
-    //========RUN========
-    std::cout << "Init value : " << solution.getObjectiveValue() << std::endl;
-
-    clock_t start = clock();
-    tabuSearch.run(MAX_STEP);
-
-    std::cout << "Time : " << ((double)(clock() - start) / CLOCKS_PER_SEC) << std::endl;
-
-    VectorSolution bestSolution(tabuSearch.getBestSolution());
-    std::cout << bestSolution.getObjectiveValue() << std::endl;
-
-    auto distribution = bestSolution.getDistribution();
-    for (auto server : distribution)
-    {
-        std::cout << server + 1 << ' ';
-    }
-    // --------------------------------------------------------
-    //========RUN========
-
 	return 0;
+}
+
+static void run(ITabuSearch<VectorSolution>* tabu_search, const size_t MAX_STEP)
+{
+    std::cout << "Init value : " << tabu_search->getBestSolution().getObjectiveValue() << '\n';
+
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    tabu_search->run(MAX_STEP);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Time: " << std::chrono::duration_cast< std::chrono::seconds >(end - start).count() << '\n' << '\n';
+    std::cout << tabu_search->getBestSolution() << '\n';
 }
