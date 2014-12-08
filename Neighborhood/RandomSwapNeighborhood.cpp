@@ -1,6 +1,6 @@
 #include "RandomSwapNeighborhood.hpp"
 #include "Move/CompoundMove.hpp"
-#include <cstdlib>
+#include <ctime>
 
 RandomSwapNeighborhood::RandomSwapNeighborhood(const TaskData &_data, size_t _numberOfAttempts)
     : data(_data)
@@ -38,7 +38,7 @@ std::vector<std::unique_ptr<IMove> > RandomSwapNeighborhood::getMoves(const ISol
 std::vector< std::pair<size_t, size_t> > RandomSwapNeighborhood::getSomePairDisk(const ISolution& solution) const
 {
     std::vector< std::pair<size_t, size_t> > result;
-    std::vector<bool> used(data.numberOfDisks * data.numberOfDisks, false);
+    std::vector<bool> used(data.getNumberOfDisks() * data.getNumberOfDisks(), false);
     auto distribution = solution.getDistribution();
 
     srand(time(0));
@@ -49,12 +49,12 @@ std::vector< std::pair<size_t, size_t> > RandomSwapNeighborhood::getSomePairDisk
 
         do
         {
-            diskId1 = rand() % data.numberOfDisks;
-            diskId2 = rand() % data.numberOfDisks;
+            diskId1 = rand() % data.getNumberOfDisks();
+            diskId2 = rand() % data.getNumberOfDisks();
         }
-        while (distribution[diskId1] == distribution[diskId2] && !used[diskId1 * data.numberOfDisks + diskId2]);
+        while (distribution[diskId1] == distribution[diskId2] && !used[diskId1 * data.getNumberOfDisks() + diskId2]);
 
-        used[diskId1 * data.numberOfDisks + diskId2] = true;
+        used[diskId1 * data.getNumberOfDisks() + diskId2] = true;
 
         result.emplace_back(diskId1, diskId2);
     }

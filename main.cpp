@@ -20,68 +20,65 @@
 #include "Neighborhood/RandomMoveNeighborhood.hpp"
 #include "Neighborhood/SwapNeighborhood.hpp"
 #include "Neighborhood/RandomSwapNeighborhood.hpp"
-#include "Neighborhood/AssignmentProblem/AssignmentProblemRandomNeighborhood.hpp"
 #include "Neighborhood/UnionNeighborhood.hpp"
-#include "Neighborhood/ProportionSwap.hpp"
-
-// Assignment Problem policy - to do with factory
-#include "Neighborhood/AssignmentProblem/RandomGetterDisks.hpp"
-#include "Neighborhood/AssignmentProblem/RandomGetterServers.hpp"
-#include "Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.hpp"
 
 #include <iostream>
-#include <memory>
 #include <utility>
 #include <thread>
 #include <chrono>
 
-static void run(ITabuSearch<VectorSolution>* tabu_search, const size_t MAX_STEP);
+static void run(ITabuSearch<VectorSolution>* const tabu_search, const size_t MAX_STEP);
+
+#include "Move/SimpleMove.hpp"
 
 int main()
 {
     // measure: how different random solution in depend DEPTH
 
     //========INIT========
-    const size_t MAX_STEP = 2;
+    const size_t MAX_STEP = 30;
     const size_t TENURE = 17;
 	std::ios_base::sync_with_stdio(false);
 
-    std::shared_ptr< TaskData > taskData(new TaskData());
-    std::cin >> *taskData;
+    TaskData taskData;
+    std::cin >> taskData;
 
     VectorSolution solution(taskData);
 
-    auto move_neighborhood = MoveNeighborhood(taskData);
-    auto swap_neighborhood = SwapNeighborhood();
+    typedef MoveNeighborhood FirstNeighborhoodType;
+    typedef SwapNeighborhood SecondNeighborhoodType;
+    typedef UnionNeighborhood<FirstNeighborhoodType, SecondNeighborhoodType> UnionNeighborhoodType;
 
-    typedef UnionNeighborhood<MoveNeighborhood, SwapNeighborhood> UnionNeighborhoodType;
-    auto union_neighborhood = UnionNeighborhoodType(move_neighborhood, swap_neighborhood);
+    auto first_neighborhood = FirstNeighborhoodType(taskData);
+    auto second_neighborhood = SecondNeighborhoodType();
+
+    auto union_neighborhood = UnionNeighborhoodType(first_neighborhood, second_neighborhood);
     auto tabu_list = HashSetTabuList(TENURE);
     auto aspiration_criteria = BestEverAspirationCriteria(solution.getObjectiveValue());
 
-//    typedef SimpleTabuSearch < VectorSolution, UnionNeighborhoodType, HashSetTabuList, BestEverAspirationCriteria > SimpleTabuSearchMoveSwap;
+    typedef SimpleTabuSearch < VectorSolution, UnionNeighborhoodType, HashSetTabuList, BestEverAspirationCriteria > SimpleTabuSearchMoveSwap;
 
-//    SimpleTabuSearchMoveSwap tabu_search(solution, union_neighborhood, tabu_list, aspiration_criteria);
+    SimpleTabuSearchMoveSwap scout_tabu_search(solution, union_neighborhood, tabu_list, aspiration_criteria);
 
-    auto scheduler = std::make_shared<Scheduler>();
-    typedef ParallelTabuSearch < VectorSolution, UnionNeighborhoodType, HashSetTabuList, BestEverAspirationCriteria > ParallelTabuSearchMoveSwap;
-
-    ParallelTabuSearchMoveSwap tabu_search(scheduler, solution, 500, union_neighborhood, tabu_list, aspiration_criteria);
-
-//    const size_t NUMBER_OF_LANDING = 3;
-//    const size_t DEPTH = 30;
 //    auto scheduler = std::make_shared<Scheduler>();
-//    LandingTabuSearch<VectorSolution, SimpleTabuSearchMoveSwap > tabu_search(
-//                NUMBER_OF_LANDING, DEPTH, scheduler, scout_tabu_search, solution, taskData
-//    );
+//    typedef ParallelTabuSearch < VectorSolution, UnionNeighborhoodType, HashSetTabuList, BestEverAspirationCriteria > ParallelTabuSearchMoveSwap;
+
+//    ParallelTabuSearchMoveSwap tabu_search(scheduler, solution, 1000, union_neighborhood, tabu_list, aspiration_criteria);
+
+    const size_t NUMBER_OF_LANDING = 3;
+    const size_t DEPTH = 30;
+    auto scheduler = std::make_shared<Scheduler>();
+    LandingTabuSearch<VectorSolution, SimpleTabuSearchMoveSwap > tabu_search(
+                NUMBER_OF_LANDING, DEPTH, scheduler, scout_tabu_search, solution, taskData
+    );
+    //========INIT========
 
     run(&tabu_search, MAX_STEP);
-    //========INIT========
 
 	return 0;
 }
 
-static void run(ITabuSearch<VectorSolution>* tabu_search, const size_t MAX_STEP)
+static void run(ITabuSearch<VectorSolution>* const tabu_search, const size_t MAX_STEP)
 {
     std::cout << "Init value : " << tabu_search->getBestSolution().getObjectiveValue() << '\n';
 

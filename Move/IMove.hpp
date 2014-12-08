@@ -36,6 +36,11 @@ public:
     };
 
 public:
+
+    /**
+     * @brief get atom moves: all moves are presented in the sequence move form
+     * @return sequence of moves
+     */
     virtual std::vector<AtomMove> getAtomMove() const = 0;
 
     virtual ~IMove() {}

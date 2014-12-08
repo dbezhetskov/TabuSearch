@@ -5,17 +5,10 @@
 
 namespace
 {
-
     size_t hash(size_t first, size_t second, size_t third)
     {
         return std::hash<size_t>()(first) ^ std::hash<int>()(second) ^ std::hash<int>()(third);
     }
-
-}
-
-size_t VectorSolution::TripleHash::operator()(const VectorSolution::MatrixIdx &idx) const
-{
-    return hash(idx.server, idx.resource, idx.time);
 }
 
 size_t VectorSolution::MoveHash::operator() (const IMove::AtomMove& atomMove) const
@@ -23,42 +16,31 @@ size_t VectorSolution::MoveHash::operator() (const IMove::AtomMove& atomMove) co
     return hash(atomMove.destination, atomMove.source, atomMove.diskId);
 };
 
-VectorSolution::VectorSolution(const std::shared_ptr<const TaskData> _data)
+VectorSolution::VectorSolution(const TaskData& _data)
     : data(_data)
-    , distribution(data->initialDistribution.cbegin(), data->initialDistribution.cend())
-    , matrixCapacity(new std::vector<double>(_data->numberOfServers * _data->numberOfTimes * _data->numberOfResource))
-    , thresholdOverheadsServerInsert(data->thresholdOverheadsInsert.cbegin(), data->thresholdOverheadsInsert.cend())
-    , thresholdOverheadsServerErase(data->thresholdOverheadsErase.cbegin(), data->thresholdOverheadsErase.cend())
-    , thresholdOverheadsServerInsertRedundancy(data->thresholdOverheadsInsert.cbegin(), data->thresholdOverheadsInsert.cend())
-    , thresholdOverheadsServerEraseRedundancy(data->thresholdOverheadsErase.cbegin(), data->thresholdOverheadsErase.cend())
+    , distribution(data.getInitialDistribution())
+    , matrixCapacity(_data.getNumberOfServers(), _data.getNumberOfTimes(), _data.getNumberOfResource())
+    , thresholdOverheadsServer(data.getThresholdOverheads())
     , objectiveValue(0)
 {
-    // -1 means that no valid pair
-    objectiveValue = fillObjectiveValueMatrix(std::vector<size_t>(), std::pair<int, size_t>(-1, 0));
+    objectiveValue = fillObjectiveValueMatrix();
 }
 
 VectorSolution::VectorSolution(const VectorSolution& other)
     : data(other.data)
     , distribution(other.distribution)
-    , matrixCapacity(new std::vector<double> (other.matrixCapacity->begin(), other.matrixCapacity->end()))
-    , thresholdOverheadsServerInsert(other.thresholdOverheadsServerInsert)
-    , thresholdOverheadsServerErase(other.thresholdOverheadsServerErase)
-    , thresholdOverheadsServerInsertRedundancy(other.thresholdOverheadsServerInsertRedundancy)
-    , thresholdOverheadsServerEraseRedundancy(other.thresholdOverheadsServerEraseRedundancy)
+    , matrixCapacity(other.matrixCapacity)
+    , thresholdOverheadsServer(other.thresholdOverheadsServer)
     , objectiveValue(other.objectiveValue)
     , moveHistory(other.moveHistory)
 {}
 
 void VectorSolution::swap(VectorSolution &other)
 {
-    std::swap(data, other.data);
     distribution.swap(other.distribution);
-    thresholdOverheadsServerInsert.swap(other.thresholdOverheadsServerInsert);
-    thresholdOverheadsServerErase.swap(other.thresholdOverheadsServerErase);
-    thresholdOverheadsServerInsertRedundancy.swap(other.thresholdOverheadsServerInsertRedundancy);
-    thresholdOverheadsServerEraseRedundancy.swap(other.thresholdOverheadsServerEraseRedundancy);
+    std::swap(thresholdOverheadsServer, other.thresholdOverheadsServer);
     std::swap(objectiveValue, other.objectiveValue);
-    matrixCapacity.swap(other.matrixCapacity);
+    std::swap(matrixCapacity, other.matrixCapacity);
     moveHistory.swap(other.moveHistory);
 }
 
@@ -72,116 +54,105 @@ VectorSolution& VectorSolution::operator=(const VectorSolution& rhs)
     return *this;
 }
 
-double& VectorSolution::getElemCapacityMatrix(VectorSolution::TMap* distinct, size_t server, size_t time, size_t resource) const
-{
-    auto it = distinct->find(MatrixIdx(server, time, resource));
-    if (distinct->end() != it)
-    {
-        return it->second;
-    }
-    return (*matrixCapacity)[server * data->numberOfTimes * data->numberOfResource + time * data->numberOfResource + resource];
-}
-
-bool VectorSolution::recalcOverheadsRedundancyByResource(const IMove::AtomMove& atomMove, const size_t resource) const
+bool VectorSolution::atomMoveIsCorrect( const IMove::AtomMove& atomMove,
+                                        std::unordered_set<IMove::AtomMove, MoveHash>* const appliedMoves,
+                                        TwoDimensionalMatrix<double>* const thresholdOverheadsServer ) const
 {
     bool correct = true;
-
-    double eraseRedundancy = getOverheadsRedundancy(TaskData::ERASE, atomMove.source, resource);
-    double insertRedundancy = getOverheadsRedundancy(TaskData::INSERT, atomMove.destination, resource);
-    double eraseOverhead = data->getOverheadsDisk(TaskData::ERASE, atomMove.source, atomMove.diskId, resource);
-    double insertOverhead = data->getOverheadsDisk(TaskData::INSERT, atomMove.destination, atomMove.diskId, resource);
-
-    if ( (eraseRedundancy - eraseOverhead) + (insertRedundancy - insertOverhead) < 0)
+    auto previouslyMove = appliedMoves->find(atomMove);
+    for (size_t resource = 0; resource < data.getNumberOfResource() && correct; ++resource)
     {
-        correct = false;
+        if (appliedMoves->end() != previouslyMove)
+        {
+            // anti insert disk
+            thresholdOverheadsServer->get(atomMove.source, resource)
+                    += data.getDiskCosts(TaskData::INSERT, atomMove.diskId, atomMove.source, resource);
+
+            // anti erase disk
+            thresholdOverheadsServer->get(atomMove.destination, resource)
+                    += data.getDiskCosts(TaskData::ERASE, atomMove.diskId, atomMove.destination, resource);
+        }
+        else
+        {
+            double sourceCapacity = thresholdOverheadsServer->get(atomMove.source, resource);
+            double destinationCapacity = thresholdOverheadsServer->get(atomMove.destination, resource);
+            double eraseOverhead = data.getDiskCosts(TaskData::ERASE, atomMove.diskId, atomMove.source, resource);
+            double insertOverhead = data.getDiskCosts(TaskData::INSERT, atomMove.diskId, atomMove.destination, resource);
+
+            if ( (sourceCapacity - eraseOverhead) < 0 || (destinationCapacity - insertOverhead) < 0)
+            {
+                correct = false;
+                break;
+            }
+
+            // erase
+            thresholdOverheadsServer->get(atomMove.source, resource) -= eraseOverhead;
+            // insert
+            thresholdOverheadsServer->get(atomMove.destination, resource) -= insertOverhead;
+        }
+    }
+
+    if (!correct)
+    {
+        return false;
+    }
+
+    if (appliedMoves->end() != previouslyMove)
+    {
+        // delete, because we undo this move
+        appliedMoves->erase(previouslyMove);
     }
     else
     {
-        // erase disk
-        getOverheadsRedundancy(TaskData::ERASE, atomMove.source, resource) -= eraseOverhead;
-
-        // insert disk
-        getOverheadsRedundancy(TaskData::INSERT, atomMove.destination, resource) -= insertOverhead;
+        // save inverse atomMove
+        appliedMoves->emplace(atomMove.source, atomMove.destination, atomMove.diskId);
     }
-
-    return correct;
-}
-
-bool VectorSolution::undoMoveRedundancy(const IMove::AtomMove& atomMove, const size_t resource) const
-{
-    // erase disk
-    getOverheadsRedundancy(TaskData::ERASE, atomMove.destination, resource) +=
-            data->getOverheadsDisk(TaskData::ERASE, atomMove.destination, atomMove.diskId, resource);
-
-    // insert disk
-    getOverheadsRedundancy(TaskData::INSERT, atomMove.source, resource) +=
-            data->getOverheadsDisk(TaskData::INSERT, atomMove.source, atomMove.diskId, resource);
 
     return true;
-}
-
-bool VectorSolution::atomMoveIsCorrect(const IMove::AtomMove& atomMove) const
-{
-    bool correct = true;
-    bool movePreviouslyMet = oldMoves.end() != oldMoves.find(atomMove);
-    for (size_t resource = 0; resource < data->numberOfResource && correct; ++resource)
-    {
-        correct = movePreviouslyMet ? undoMoveRedundancy(atomMove, resource)
-                                    : recalcOverheadsRedundancyByResource(atomMove, resource);
-    }
-
-    return correct;
 }
 
 bool VectorSolution::moveIsCorrect(const IMove &move) const
 {
     bool correct = true;
 
+    // work with copy, don't change current state
+    auto appliedMovesCopy = appliedMoves;
+    auto thresholdOverheadsServerCopy = thresholdOverheadsServer;
+
     for (auto atomMove : move.getAtomMove())
     {
         assert(atomMove.source != atomMove.destination);
         assert(atomMove.source == distribution[atomMove.diskId]);
 
-        if (!atomMoveIsCorrect(atomMove))
+        if (!atomMoveIsCorrect(atomMove, &appliedMovesCopy, &thresholdOverheadsServerCopy))
         {
             correct = false;
             break;
         }
     }
 
-    // return to a consistent state
-    std::copy(thresholdOverheadsServerInsert.cbegin(), thresholdOverheadsServerInsert.cend(), thresholdOverheadsServerInsertRedundancy.begin());
-    std::copy(thresholdOverheadsServerErase.cbegin(), thresholdOverheadsServerErase.cend(), thresholdOverheadsServerEraseRedundancy.begin());
-
     return correct;
 }
 
-std::pair<VectorSolution::Changes, double> VectorSolution::tryOnAtomeMove(
-        VectorSolution::TMap* distinct,
-        double startObjectiveValue,
-        const IMove::AtomMove& atomMove
-        ) const
+double VectorSolution::tryOnAtomMove(ThreeDimensionalMatrix<double> *matrixCapacity, double startObjectiveValue, const IMove::AtomMove& atomMove ) const
 {
     assert(atomMove.source != atomMove.destination);
     assert(atomMove.source == distribution[atomMove.diskId]);
-
-    Changes changes;
-    MatrixElem matrixElem;
+    assert(atomMove.source < data.getNumberOfServers() && atomMove.destination < data.getNumberOfServers());
 
     if (atomMove.source == atomMove.destination)
     {
-        return std::pair<VectorSolution::Changes, double>(changes, startObjectiveValue);
+        return startObjectiveValue;
     }
 
-    for (size_t time = 0; time < data->numberOfTimes; ++time)
+    for (size_t time = 0; time < data.getNumberOfTimes(); ++time)
     {
-        for (size_t resource = 0; resource < data->numberOfResource; ++resource)
+        for (size_t resource = 0; resource < data.getNumberOfResource(); ++resource)
         {
             // for destination
-            if (getElemCapacityMatrix(distinct, atomMove.destination, time, resource) <= 0)
+            if (matrixCapacity->get(atomMove.destination, time, resource) <= 0)
             {
-                double newValueWithDisk = getElemCapacityMatrix(distinct, atomMove.destination, time, resource)
-                        + data->getCapacity(atomMove.diskId, resource, time);
+                double newValueWithDisk = matrixCapacity->get(atomMove.destination, time, resource) + data.getCapacity(atomMove.diskId, resource, time);
                 if (newValueWithDisk > 0)
                 {
                     startObjectiveValue += newValueWithDisk;
@@ -189,127 +160,64 @@ std::pair<VectorSolution::Changes, double> VectorSolution::tryOnAtomeMove(
             }
             else
             {
-                startObjectiveValue += data->getCapacity(atomMove.diskId, resource, time);
+                startObjectiveValue += data.getCapacity(atomMove.diskId, resource, time);
             }
-
-            matrixElem.first = MatrixIdx(atomMove.destination, time, resource);
-            matrixElem.second = data->getCapacity(atomMove.diskId, resource, time) + getElemCapacityMatrix(distinct, atomMove.destination, time, resource);
-            changes.push_back(matrixElem);
+            matrixCapacity->get(atomMove.destination, time, resource) += data.getCapacity(atomMove.diskId, resource, time);
 
             // for source
-            if (getElemCapacityMatrix(distinct, atomMove.source, time, resource) > 0)
+            if (matrixCapacity->get(atomMove.source, time, resource) > 0)
             {
-                double newValueWithoutDisk = getElemCapacityMatrix(distinct, atomMove.source, time, resource)
-                        - data->getCapacity(atomMove.diskId, resource, time);
+                double newValueWithoutDisk = matrixCapacity->get(atomMove.source, time, resource) - data.getCapacity(atomMove.diskId, resource, time);
                 if (newValueWithoutDisk <= 0)
                 {
-                    startObjectiveValue -= getElemCapacityMatrix(distinct, atomMove.source, time, resource);
+                    startObjectiveValue -= matrixCapacity->get(atomMove.source, time, resource);
                 }
                 else
                 {
-                    startObjectiveValue -= data->getCapacity(atomMove.diskId, resource, time);
+                    startObjectiveValue -= data.getCapacity(atomMove.diskId, resource, time);
                 }
             }
-
-            matrixElem.first = MatrixIdx(atomMove.source, time, resource);
-            matrixElem.second = getElemCapacityMatrix(distinct, atomMove.source, time, resource) - data->getCapacity(atomMove.diskId, resource, time);
-            changes.push_back(matrixElem);
+            matrixCapacity->get(atomMove.source, time, resource) -= data.getCapacity(atomMove.diskId, resource, time);
         }
     }
 
-    return std::pair<VectorSolution::Changes, double>(changes, startObjectiveValue);
+    return startObjectiveValue;
 }
 
 double VectorSolution::tryOnMove(const IMove& move) const
 {
-    TMap distinct;
-    double previousObjectiveValue = objectiveValue;
+    auto matrixCapacityCopy = matrixCapacity;
+    double oldObjectiveValue = objectiveValue;
 
     for (auto atomMove : move.getAtomMove())
     {
         assert(atomMove.source != atomMove.destination);
         assert(atomMove.source == distribution[atomMove.diskId]);
+        assert(atomMove.source < data.getNumberOfServers() && atomMove.destination < data.getNumberOfServers());
 
-        auto result = tryOnAtomeMove(&distinct, previousObjectiveValue, atomMove);
-        Changes changes = result.first;
-        previousObjectiveValue = result.second;
-        distinct.insert(changes.begin(), changes.end());
+        double newObjectiveValue = tryOnAtomMove(&matrixCapacityCopy, oldObjectiveValue, atomMove);
+        oldObjectiveValue = newObjectiveValue;
     }
 
-    return previousObjectiveValue;
-}
-
-void VectorSolution::recalcOverheads(const IMove::AtomMove& atomMove, const size_t resource)
-{
-    // erase disk
-    getOverheads(TaskData::ERASE, atomMove.source, resource) -=
-            data->getOverheadsDisk(TaskData::ERASE, atomMove.source, atomMove.diskId, resource);
-    getOverheadsRedundancy(TaskData::ERASE, atomMove.source, resource) = getOverheads(TaskData::ERASE, atomMove.source, resource);
-
-    // insert disk
-    getOverheads(TaskData::INSERT, atomMove.destination, resource) -=
-            data->getOverheadsDisk(TaskData::INSERT, atomMove.destination, atomMove.diskId, resource);
-    getOverheadsRedundancy(TaskData::INSERT, atomMove.destination, resource) = getOverheads(TaskData::INSERT, atomMove.destination, resource);
-}
-
-void VectorSolution::undoMove(const IMove::AtomMove& atomMove, const size_t resource)
-{
-    // erase disk
-    getOverheads(TaskData::ERASE, atomMove.destination, resource) +=
-            data->getOverheadsDisk(TaskData::ERASE, atomMove.destination, atomMove.diskId, resource);
-    getOverheadsRedundancy(TaskData::ERASE, atomMove.destination, resource) = getOverheads(TaskData::ERASE, atomMove.destination, resource);
-
-    // insert disk
-    getOverheads(TaskData::INSERT, atomMove.source, resource) +=
-            data->getOverheadsDisk(TaskData::INSERT, atomMove.source, atomMove.diskId, resource);
-    getOverheadsRedundancy(TaskData::INSERT, atomMove.source, resource) = getOverheads(TaskData::INSERT, atomMove.source, resource);
+    return oldObjectiveValue;
 }
 
 void VectorSolution::applyMove(const IMove& move)
 {
-    TMap clearMap;
-
     for (const auto atomMove : move.getAtomMove())
     {
         assert(atomMove.source != atomMove.destination);
         assert(atomMove.source == distribution[atomMove.diskId]);
-        moveHistory.push_back(atomMove);
+        assert(atomMove.source < data.getNumberOfServers() && atomMove.destination < data.getNumberOfServers());
 
-        auto result = tryOnAtomeMove(&clearMap, objectiveValue, atomMove);
-        for (auto change : result.first)
-        {
-            MatrixIdx idx = change.first;
-            getElemCapacityMatrix(idx.server, idx.time, idx.resource) = change.second;
-        }
-        objectiveValue = result.second;
-        moveDisk(atomMove.destination, atomMove.source, atomMove.diskId);
+        moveHistory.push_back(atomMove);
+        objectiveValue = tryOnAtomMove(&matrixCapacity, objectiveValue, atomMove);
 
         // overheads
-        auto iter = oldMoves.find(atomMove);
-        for (size_t resource = 0; resource < data->numberOfResource; ++resource)
-        {
-            if (oldMoves.end() != iter)
-            {
-                undoMove(atomMove, resource);
-            }
-            else
-            {
-                recalcOverheads(atomMove, resource);
-            }
+        bool correct = atomMoveIsCorrect(atomMove, &appliedMoves, &thresholdOverheadsServer);
+        assert(correct);
 
-            assert(getOverheads(TaskData::ERASE, atomMove.destination, resource) + getOverheads(TaskData::INSERT, atomMove.destination, resource) >= 0);
-            assert(getOverheads(TaskData::ERASE, atomMove.source, resource) + getOverheads(TaskData::INSERT, atomMove.source, resource) >= 0);
-        }
-
-        if (oldMoves.end() != iter)
-        {
-            oldMoves.erase(iter);
-        }
-        else
-        {
-            // save inverse atomMove
-            oldMoves.emplace(atomMove.source, atomMove.destination, atomMove.diskId);
-        }
+        moveDisk(atomMove.destination, atomMove.source, atomMove.diskId);
     }
 }
 
@@ -318,79 +226,46 @@ double VectorSolution::getObjectiveValue() const
     return objectiveValue;
 }
 
-double VectorSolution::fillObjectiveValueMatrix(
-        const std::vector<size_t>& removedDisks,
-        const std::pair<int, size_t> insertedDisk
-) const
+double VectorSolution::fillObjectiveValueMatrix()
 {
-    for (size_t server = 0; server < data->numberOfServers; ++server)
+    for (size_t server = 0; server < data.getNumberOfServers(); ++server)
     {
-        for (size_t time = 0; time < data->numberOfTimes; ++time)
+        for (size_t time = 0; time < data.getNumberOfTimes(); ++time)
         {
-            for (size_t resource = 0; resource < data->numberOfResource; ++resource)
+            for (size_t resource = 0; resource < data.getNumberOfResource(); ++resource)
             {
-                getElemCapacityMatrix(server, time, resource) = -1 * data->getThresholdCapacity(server, resource);
+                matrixCapacity.get(server, time, resource) = -1 * data.getThresholdCapacity(server, resource);
             }
         }
     }
 
-    std::vector<bool> removed(data->numberOfDisks, false);
-    for (auto diskId : removedDisks)
-    {
-        removed[diskId] = true;
-    }
-
     for (size_t diskId = 0; diskId < distribution.size(); ++diskId)
     {
-        if (removed[diskId] && insertedDisk.second != diskId)
+        for (size_t time = 0; time < data.getNumberOfTimes(); ++time)
         {
-            continue;
-        }
-
-        size_t server = distribution[diskId];
-        if (-1 != insertedDisk.first && insertedDisk.second == diskId)
-        {
-            server = insertedDisk.first;
-        }
-
-        for (size_t time = 0; time < data->numberOfTimes; ++time)
-        {
-            for (size_t resource = 0; resource < data->numberOfResource; ++resource)
+            for (size_t resource = 0; resource < data.getNumberOfResource(); ++resource)
             {
-                getElemCapacityMatrix(server, time, resource) += data->getCapacity(diskId, resource, time);
+                matrixCapacity.get(distribution[diskId], time, resource) += data.getCapacity(diskId, resource, time);
             }
         }
     }
 
     double objectiveValue = 0;
-    for (size_t server = 0; server < data->numberOfServers; ++server)
+    for (size_t server = 0; server < data.getNumberOfServers(); ++server)
     {
-        for (size_t time = 0; time < data->numberOfTimes; ++time)
+        for (size_t time = 0; time < data.getNumberOfTimes(); ++time)
         {
-            for (size_t resource = 0; resource < data->numberOfResource; ++resource)
+            for (size_t resource = 0; resource < data.getNumberOfResource(); ++resource)
             {
-                if (getElemCapacityMatrix(server, time, resource) > 0)
+                if (matrixCapacity.get(server, time, resource) > 0)
                 {
-                    objectiveValue += getElemCapacityMatrix(server, time, resource);
+                    objectiveValue += matrixCapacity.get(server, time, resource);
                 }
             }
         }
     }
 
     return objectiveValue;
-}
-
-double VectorSolution::tryOnInsertDisk(const size_t server, const size_t disk, const std::vector<size_t>& removedDisks) const
-{
-    // save old value
-    std::unique_ptr< std::vector<double> > copyMatrixCapacity(new std::vector<double>(matrixCapacity->cbegin(), matrixCapacity->cend()));
-
-    double objectiveValueWithoutRemovedDisks = fillObjectiveValueMatrix(removedDisks, std::pair<int, size_t>(server, disk));
-
-    // restore
-    matrixCapacity = std::move(copyMatrixCapacity);
-
-    return objectiveValueWithoutRemovedDisks;
 }
 
 void VectorSolution::moveDisk(size_t destination, size_t, size_t diskId)
@@ -408,9 +283,10 @@ std::vector<IMove::AtomMove> VectorSolution::getMoveHistory() const
     return moveHistory;
 }
 
-size_t VectorSolution::getServerForDisk(const size_t disk_id) const
+size_t VectorSolution::getServerForDisk(size_t diskId)
 {
-    return distribution[disk_id];
+    assert(diskId < distribution.size());
+    return distribution[diskId];
 }
 
 std::ostream& operator<<(std::ostream& outStream, const VectorSolution& solution)
@@ -425,11 +301,11 @@ std::ostream& operator<<(std::ostream& outStream, const VectorSolution& solution
     }
     outStream << '\n';
 
-    auto moveHistory = solution.getMoveHistory();
+    /*auto moveHistory = solution.getMoveHistory();
     for (auto atomMove : moveHistory)
     {
         outStream << atomMove << '\n';
-    }
+    }*/
 
     return outStream;
 }

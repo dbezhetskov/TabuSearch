@@ -7,12 +7,12 @@
 class MoveNeighborhood : public INeighborhood
 {
 public:
-    MoveNeighborhood(const std::shared_ptr<const TaskData> _data);
+    MoveNeighborhood(const TaskData &_data);
 
     virtual std::vector< std::unique_ptr<IMove> > getMoves(const ISolution& solution) const override;
 
 private:
-    std::shared_ptr<const TaskData> data;
+    const TaskData& data;
 };
 
 #endif // MOVENEIGHBORHOOD_H

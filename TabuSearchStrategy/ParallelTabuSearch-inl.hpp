@@ -39,7 +39,7 @@ void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteri
         auto moves = neighborhood.getMoves(currentSolution);
         if (moves.empty())
         {
-            std::cout << "Moves exhaustion, return in bestSolution" << std::endl;
+            std::cout << "Moves exhaustion, return in bestSolution" << '\n';
             currentSolution = bestSolution;
             continue;
         }
@@ -128,13 +128,13 @@ void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteri
 
         if (-1 == index_of_best)
         {
-            std::cout << "all moves is tabu" << std::endl;
+            std::cout << "all moves is tabu" << '\n';
             break;
         }
 
         // apply move
         currentSolution.applyMove(*moves[index_of_best]);
-        std::cout << best_obj_val << std::endl;
+        std::cout << best_obj_val << '\n';
 
         if (best_obj_val <= bestSolution.getObjectiveValue())
         {

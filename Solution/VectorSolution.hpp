@@ -4,15 +4,16 @@
 #include "ISolution.hpp"
 #include "InitialStandardData/TaskData.hpp"
 #include <vector>
-#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
+#include "Utils/ThreeDimensionalMatrix.hpp"
+#include "Utils/TwoDimensionalMatrix.hpp"
 
 class VectorSolution : public ISolution
 {
 public:
-    VectorSolution(const std::shared_ptr<const TaskData> _data);
+    VectorSolution(const TaskData& _data);
 
     VectorSolution(const VectorSolution& other);
 
@@ -21,8 +22,6 @@ public:
     void swap(VectorSolution& other);
 
     virtual double tryOnMove(const IMove& move) const override;
-
-    virtual double tryOnInsertDisk(const size_t server, const size_t disk, const std::vector<size_t>& removedDisks) const override;
 
     virtual void applyMove(const IMove& move) override;
 
@@ -34,45 +33,9 @@ public:
 
     virtual std::vector<IMove::AtomMove> getMoveHistory() const override;
 
-    virtual size_t getServerForDisk(const size_t disk_id) const override;
+    size_t getServerForDisk(size_t diskId);
 
 private:
-    struct MatrixIdx
-    {
-        MatrixIdx()
-        {
-            server = -1;
-            time = -1;
-            resource = -1;
-        }
-
-        MatrixIdx(size_t _server, size_t _time, size_t _resource)
-        {
-            server = _server;
-            time = _time;
-            resource = _resource;
-        }
-
-        bool operator==(const MatrixIdx& rhs) const
-        {
-            return resource == rhs.resource && server == rhs.server && time == rhs.time;
-        }
-
-        size_t server;
-        size_t time;
-        size_t resource;
-    };
-
-    struct TripleHash
-    {
-        std::size_t operator()(const VectorSolution::MatrixIdx &idx) const;
-    };
-
-    typedef std::pair<MatrixIdx, double> MatrixElem;
-
-    typedef std::vector<MatrixElem> Changes;
-
-    typedef std::unordered_map<MatrixIdx, double, TripleHash> TMap;
 
     struct MoveHash
     {
@@ -80,75 +43,32 @@ private:
     };
 
 private:
-    double fillObjectiveValueMatrix(const std::vector<size_t>& removedDisks,
-                                    const std::pair<int, size_t> insertedDisk) const;
+    double fillObjectiveValueMatrix();
 
     void moveDisk(size_t destination, size_t, size_t diskId);
 
-    std::pair<Changes, double> tryOnAtomeMove(
-            TMap *distinct
-            , double startObjectiveValue
-            , const IMove::AtomMove& atomMove
-            ) const;
+    double tryOnAtomMove(ThreeDimensionalMatrix<double>* const matrixCapacity, double startObjectiveValue, const IMove::AtomMove& atomMove) const;
 
-    bool atomMoveIsCorrect(const IMove::AtomMove &atomMove) const;
-
-    inline bool recalcOverheadsRedundancyByResource(const IMove::AtomMove& atomMove, const size_t resource) const;
-
-    inline bool undoMoveRedundancy(const IMove::AtomMove& atomMove, const size_t resource) const;
-
-    inline void recalcOverheads(const IMove::AtomMove& atomMove, const size_t resource);
-
-    inline void undoMove(const IMove::AtomMove& atomMove, const size_t resource);
-
-    double& getElemCapacityMatrix(TMap *distinct, size_t server, size_t time, size_t resource) const;
-
-    inline double& getElemCapacityMatrix(size_t server, size_t time, size_t resource) const;
-
-    inline double& getOverheads(const TaskData::TypeOperation typeOperation, size_t server, size_t resource);
-
-    inline double& getOverheadsRedundancy(const TaskData::TypeOperation typeOperation, size_t server, size_t resource) const;
+    bool atomMoveIsCorrect( const IMove::AtomMove& atomMove,
+                            std::unordered_set<IMove::AtomMove, MoveHash>* const appliedMoves,
+                            TwoDimensionalMatrix<double>* const thresholdOverheadsServer ) const;
 
     friend std::ostream& operator<<(std::ostream& outStream, const VectorSolution& solution);
 
 private:
-    std::shared_ptr<const TaskData> data;
+    const TaskData& data;
 
 	std::vector<size_t> distribution;
 
-    mutable std::unique_ptr< std::vector<double> > matrixCapacity;
+    ThreeDimensionalMatrix<double> matrixCapacity;
 
-    std::vector<double> thresholdOverheadsServerInsert;
-
-    std::vector<double> thresholdOverheadsServerErase;
-
-    mutable std::vector<double> thresholdOverheadsServerInsertRedundancy;
-
-    mutable std::vector<double> thresholdOverheadsServerEraseRedundancy;
+    TwoDimensionalMatrix<double> thresholdOverheadsServer;
 
     double objectiveValue;
 
-    std::unordered_set<IMove::AtomMove, MoveHash> oldMoves;
+    std::unordered_set<IMove::AtomMove, MoveHash> appliedMoves;
 
     std::vector<IMove::AtomMove> moveHistory;
 };
-
-inline double& VectorSolution::getElemCapacityMatrix(size_t server, size_t time, size_t resource) const
-{
-    return (*matrixCapacity)[server * data->numberOfTimes * data->numberOfResource + time * data->numberOfResource + resource];
-}
-
-inline double& VectorSolution::getOverheads(const TaskData::TypeOperation typeOperation, size_t server, size_t resource)
-{
-    std::vector<double>* pointer = (TaskData::ERASE == typeOperation) ? &thresholdOverheadsServerErase : &thresholdOverheadsServerInsert;
-    return (*pointer)[server * data->numberOfResource + resource];
-}
-
-inline double& VectorSolution::getOverheadsRedundancy(const TaskData::TypeOperation typeOperation, size_t server, size_t resource) const
-{
-    std::vector<double>* pointer =
-            (TaskData::ERASE == typeOperation) ? &thresholdOverheadsServerEraseRedundancy : &thresholdOverheadsServerInsertRedundancy;
-    return (*pointer)[server * data->numberOfResource + resource];
-}
 
 #endif // !_VECTOR_SOLUTION_H_

@@ -1,7 +1,7 @@
 #include "MoveNeighborhood.hpp"
 #include "Move/SimpleMove.hpp"
 
-MoveNeighborhood::MoveNeighborhood(const std::shared_ptr<const TaskData> _data)
+MoveNeighborhood::MoveNeighborhood(const TaskData& _data)
     : data(_data)
 {
 }
@@ -13,7 +13,7 @@ std::vector<std::unique_ptr<IMove> > MoveNeighborhood::getMoves(const ISolution&
 
     for (size_t i = 0; i < distribution.size(); ++i)
     {
-        for (size_t j = 0; j < data->numberOfServers; ++j)
+        for (size_t j = 0; j < data.getNumberOfServers(); ++j)
         {
             if (distribution[i] != j)
             {

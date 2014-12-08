@@ -20,7 +20,7 @@ public:
             std::shared_ptr<Scheduler>              _scheduler,
             const TTabuSearch&                      _tabu_search,
             const TSolution&                        initialSolution,
-            const std::shared_ptr<const TaskData>   _data
+            const TaskData&                         _data
     );
 
     virtual void run(const size_t number_of_steps) override;
@@ -40,7 +40,7 @@ private:
 
     TTabuSearch tabu_search;
 
-    const std::shared_ptr<const TaskData> data;
+    const TaskData& data;
 };
 
 #include "LandingTabuSearch-inl.hpp"

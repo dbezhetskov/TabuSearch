@@ -17,18 +17,14 @@ SOURCES += main.cpp \
     Neighborhood/RandomMoveNeighborhood.cpp \
     Neighborhood/MoveNeighborhood.cpp \
     Move/SimpleMove.cpp \
-    Neighborhood/RandomAlignmentNeighborhood.cpp \
     Move/CompoundMove.cpp \
     Neighborhood/SwapNeighborhood.cpp \
-    Neighborhood/RandomSwapNeighborhood.cpp \
-    Neighborhood/AssignmentProblem/RandomGetterServers.cpp \
-    Neighborhood/AssignmentProblem/RandomGetterDisks.cpp \
-    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.cpp \
-    Neighborhood/ProportionSwap.cpp
+    Neighborhood/RandomSwapNeighborhood.cpp
 
 HEADERS += \
     Move/IMove.hpp \
     Neighborhood/INeighborhood.hpp \
+    Neighborhood/IChangeableSizeNeighborhood.hpp \
     Solution/ISolution.hpp \
     Solution/VectorSolution.hpp \
     TabuSearchStrategy/SimpleTabuSearch.hpp \
@@ -39,25 +35,15 @@ HEADERS += \
     AspirationCriteria/IAspirationCriteria.hpp \
     AspirationCriteria/BestEverAspirationCriteria.hpp \
     Neighborhood/RandomMoveNeighborhood.hpp \
-    Move/MoveNeighborhood.hpp \
+    Neighborhood/MoveNeighborhood.hpp \
     Move/SimpleMove.hpp \
-    Neighborhood/RandomAlignmentNeighborhood.hpp \
     Move/CompoundMove.hpp \
-    Neighborhood/AssignmentProblem/AssignmentProblemRandomNeighborhood.hpp \
     Neighborhood/SwapNeighborhood.hpp \
     Neighborhood/RandomSwapNeighborhood.hpp \
-    Neighborhood/IChangeableSizeNeighborhood.hpp \
     TabuSearchStrategy/ITabuSearch.hpp \
     TabuSearchStrategy/SimpleAssignmentProblemTabuSearch.hpp \
     TabuSearchStrategy/SimpleAssignmentProblemTabuSearch-inl.hpp \
     Neighborhood/UnionNeighborhood.hpp \
-    Neighborhood/AssignmentProblem/AssignmentProblemRandomNeighborhood-inl.hpp \
-    Neighborhood/AssignmentProblem/RandomGetterServers.hpp \
-    Neighborhood/AssignmentProblem/IGetterServers.hpp \
-    Neighborhood/AssignmentProblem/IGetterDisks.hpp \
-    Neighborhood/AssignmentProblem/RandomGetterDisks.hpp \
-    Neighborhood/AssignmentProblem/RandomOneDiskByServerGetter.hpp \
-    Neighborhood/ProportionSwap.hpp \
     TabuSearchStrategy/ParallelTabuSearch-inl.hpp \
     TabuSearchStrategy/ParallelTabuSearch.hpp \
     Scheduler/Scheduler.hpp \
@@ -65,4 +51,6 @@ HEADERS += \
     Scheduler/FunctionWrapper.hpp \
     TabuSearchStrategy/LandingTabuSearch.hpp \
     TabuSearchStrategy/LandingTabuSearch-inl.hpp \
-    Neighborhood/UnionNeighborhood-inl.hpp
+    Neighborhood/UnionNeighborhood-inl.hpp \
+    Utils/TwoDimensionalMatrix.hpp \
+    Utils/ThreeDimensionalMatrix.hpp

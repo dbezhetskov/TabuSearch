@@ -46,13 +46,12 @@ TSolution random_walk
 
 template< class TSolution, class TTabuSearch >
 LandingTabuSearch<TSolution, TTabuSearch>::LandingTabuSearch
-(
-        size_t                                  _number_of_landings,
+(size_t                                  _number_of_landings,
         size_t                                  _depth,
         std::shared_ptr<Scheduler>              _scheduler,
         const TTabuSearch&                      _tabu_search,
         const TSolution&                        initialSolution,
-        const std::shared_ptr<const TaskData>   _data
+        const TaskData&                         _data
 )
     : bestSolution(initialSolution)
     , scheduler(_scheduler)
@@ -70,7 +69,7 @@ void LandingTabuSearch<TSolution, TTabuSearch>::run(const size_t number_of_steps
     std::vector< TSolution > random_solutions;
     for (size_t i = 0; i < number_of_landings; ++i)
     {
-        random_solutions.emplace_back(random_walk(bestSolution, depth, data->numberOfServers, data->numberOfDisks));
+        random_solutions.emplace_back(random_walk(bestSolution, depth, data.getNumberOfServers(), data.getNumberOfDisks()));
     }
 
     // 2. ditribute random solution

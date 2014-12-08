@@ -8,8 +8,7 @@ Scheduler::Scheduler(unsigned number_of_threads = 0)
 {
     if (0 == number_of_threads)
     {
-        unsigned hardware_concurrency = std::thread::hardware_concurrency();
-        number_of_threads = hardware_concurrency <= 1 ? 1 : hardware_concurrency - 1;
+        number_of_threads = std::thread::hardware_concurrency();
     }
 
     for (unsigned i = 0; i < number_of_threads; ++i)
