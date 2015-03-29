@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QMAKE_CXXFLAGS += -std=c++11
-QMAKE_CFLAGS_RELEASE    = -O2
+QMAKE_CFLAGS_RELEASE += -O2
 
 LIBS += -pthread -Wl,--no-as-needed
 
@@ -19,12 +19,13 @@ SOURCES += main.cpp \
     Move/SimpleMove.cpp \
     Move/CompoundMove.cpp \
     Neighborhood/SwapNeighborhood.cpp \
-    Neighborhood/RandomSwapNeighborhood.cpp
+    Neighborhood/RandomSwapNeighborhood.cpp \
+    TabuSearchStrategy/SimpleTabuSearchReverse.cpp \
+    TabuSearchStrategy/SimpleTabuSearchReverse-impl.cpp
 
 HEADERS += \
     Move/IMove.hpp \
     Neighborhood/INeighborhood.hpp \
-    Neighborhood/IChangeableSizeNeighborhood.hpp \
     Solution/ISolution.hpp \
     Solution/VectorSolution.hpp \
     TabuSearchStrategy/SimpleTabuSearch.hpp \
@@ -53,4 +54,5 @@ HEADERS += \
     TabuSearchStrategy/LandingTabuSearch-inl.hpp \
     Neighborhood/UnionNeighborhood-inl.hpp \
     Utils/TwoDimensionalMatrix.hpp \
-    Utils/ThreeDimensionalMatrix.hpp
+    Utils/ThreeDimensionalMatrix.hpp \
+    TabuSearchStrategy/SimpleTabuSearchReverse.hpp

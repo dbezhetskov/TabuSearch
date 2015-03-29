@@ -13,7 +13,7 @@
 class VectorSolution : public ISolution
 {
 public:
-    VectorSolution(const TaskData& _data);
+    VectorSolution(const TaskData& _data, const double _overheadsCoefficient);
 
     VectorSolution(const VectorSolution& other);
 
@@ -33,7 +33,13 @@ public:
 
     virtual std::vector<IMove::AtomMove> getMoveHistory() const override;
 
-    size_t getServerForDisk(size_t diskId);
+    virtual void setOverheadsCoefficient(const double value) override;
+
+    virtual double getOverheadsCoefficient() override;
+
+    size_t getServerForDisk(size_t diskId) const;
+
+    double getOverheads() const;
 
 private:
 
@@ -45,13 +51,13 @@ private:
 private:
     double fillObjectiveValueMatrix();
 
-    void moveDisk(size_t destination, size_t, size_t diskId);
+    void moveDisk(size_t destination, size_t source, size_t diskId);
 
     double tryOnAtomMove(ThreeDimensionalMatrix<double>* const matrixCapacity, double startObjectiveValue, const IMove::AtomMove& atomMove) const;
 
-    bool atomMoveIsCorrect( const IMove::AtomMove& atomMove,
-                            std::unordered_set<IMove::AtomMove, MoveHash>* const appliedMoves,
-                            TwoDimensionalMatrix<double>* const thresholdOverheadsServer ) const;
+    double getOverheads(const IMove::AtomMove& atomMove,
+                         std::unordered_set<IMove::AtomMove, MoveHash>* const appliedMoves,
+                         TwoDimensionalMatrix<double>* const thresholdOverheadsServer, double startOverheads) const;
 
     friend std::ostream& operator<<(std::ostream& outStream, const VectorSolution& solution);
 
@@ -66,9 +72,13 @@ private:
 
     double objectiveValue;
 
+    double overheads;
+
     std::unordered_set<IMove::AtomMove, MoveHash> appliedMoves;
 
     std::vector<IMove::AtomMove> moveHistory;
+
+    double overheadsCoefficient;
 };
 
 #endif // !_VECTOR_SOLUTION_H_

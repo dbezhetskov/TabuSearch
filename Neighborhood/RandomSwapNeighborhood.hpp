@@ -1,15 +1,13 @@
 #ifndef RANDOMSWAPNEIGHBORHOOD_HPP
 #define RANDOMSWAPNEIGHBORHOOD_HPP
 
+#include "Neighborhood/INeighborhood.hpp"
 #include "InitialStandardData/TaskData.hpp"
-#include "IChangeableSizeNeighborhood.hpp"
 
-class RandomSwapNeighborhood : public IChangeableSizeNeighborhood
+class RandomSwapNeighborhood : public INeighborhood
 {
 public:
     RandomSwapNeighborhood(const TaskData& _data, size_t _numberOfAttempts);
-
-    virtual void setSize(const size_t _size) override;
 
     virtual std::vector< std::unique_ptr<IMove> > getMoves(const ISolution& solution) const override;
 

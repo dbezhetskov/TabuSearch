@@ -31,11 +31,13 @@ public:
 
     T get(const size_t indexOfRow, const size_t indexOfColumn) const
     {
+        assert(indexOfRow < numberOfRow && indexOfColumn < numberOfColumn);
         return data[numberOfColumn * indexOfRow + indexOfColumn];
     }
 
     T& get(const size_t indexOfRow, const size_t indexOfColumn)
     {
+        assert(indexOfRow < numberOfRow && indexOfColumn < numberOfColumn);
         return data[numberOfColumn * indexOfRow + indexOfColumn];
     }
 

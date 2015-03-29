@@ -78,6 +78,15 @@ TwoDimensionalMatrix<double> TaskData::getThresholdOverheads() const
     return thresholdOverheadsServers;
 }
 
+TaskData::TaskData()
+    : numberOfDisks(0)
+    , numberOfServers(0)
+    , numberOfResource(0)
+    , numberOfTimes(0)
+{
+
+}
+
 double TaskData::getCapacity(size_t disk, size_t resource, size_t time) const
 {
     return disksCapacity.get(disk, resource, time);

@@ -15,6 +15,8 @@ public:
         INSERT
     };
 public:
+    TaskData();
+
 	double getCapacity(size_t disk, size_t resource, size_t time) const;
 
 	double getThresholdCapacity(size_t server, size_t resource) const;

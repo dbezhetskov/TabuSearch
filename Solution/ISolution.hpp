@@ -58,6 +58,18 @@ public:
      */
     bool operator< (const ISolution& right) const;
 
+    /**
+     * @brief set overheads coefficient
+     * @param value
+     */
+    virtual void setOverheadsCoefficient(const double value) = 0;
+
+    /**
+     * @brief get overheads coefficient
+     * @param value
+     */
+    virtual double getOverheadsCoefficient() = 0;
+
 	virtual ~ISolution() {}
 };
 

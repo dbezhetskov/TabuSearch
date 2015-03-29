@@ -7,11 +7,11 @@ template<class SolutionType>
 class ITabuSearch
 {
 public:
-    virtual void run(const size_t number_of_steps) = 0;
+    virtual void run(const size_t numberOfSteps) = 0;
 
     virtual SolutionType getBestSolution() = 0;
 
-    virtual void setStartSolution(SolutionType solution) = 0;
+    virtual void setStartSolution(const SolutionType& solution) = 0;
 
 	virtual ~ITabuSearch() {}
 };

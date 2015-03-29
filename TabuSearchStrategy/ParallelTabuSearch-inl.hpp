@@ -134,7 +134,7 @@ void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteri
 
         // apply move
         currentSolution.applyMove(*moves[index_of_best]);
-        std::cout << best_obj_val << '\n';
+        //std::cout << best_obj_val << '\n';
 
         if (best_obj_val <= bestSolution.getObjectiveValue())
         {

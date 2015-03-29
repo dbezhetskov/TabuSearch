@@ -3,10 +3,9 @@
 
 MoveNeighborhood::MoveNeighborhood(const TaskData& _data)
     : data(_data)
-{
-}
+{}
 
-std::vector<std::unique_ptr<IMove> > MoveNeighborhood::getMoves(const ISolution& solution) const
+std::vector<std::unique_ptr<IMove>> MoveNeighborhood::getMoves(const ISolution& solution) const
 {
     std::vector< std::unique_ptr<IMove> > result;
     std::vector<size_t> distribution = solution.getDistribution();

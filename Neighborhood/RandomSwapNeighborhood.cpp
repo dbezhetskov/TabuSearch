@@ -8,11 +8,6 @@ RandomSwapNeighborhood::RandomSwapNeighborhood(const TaskData &_data, size_t _nu
 {
 }
 
-void RandomSwapNeighborhood::setSize(const size_t _size)
-{
-    numberOfAttempts = _size;
-}
-
 std::vector<std::unique_ptr<IMove> > RandomSwapNeighborhood::getMoves(const ISolution& solution) const
 {
     auto distribution = solution.getDistribution();

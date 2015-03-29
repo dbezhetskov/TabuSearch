@@ -8,11 +8,6 @@ RandomMoveNeighborhood::RandomMoveNeighborhood(const TaskData &_data, size_t _nu
 {
 }
 
-void RandomMoveNeighborhood::setSize(const size_t _size)
-{
-    numberOfAttempts = _size;
-}
-
 std::vector<std::unique_ptr<IMove> > RandomMoveNeighborhood::getMoves(const ISolution& solution) const
 {
     std::vector< std::unique_ptr<IMove> > result;
