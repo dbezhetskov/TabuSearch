@@ -2,13 +2,13 @@
 #define PARALLELTABUSEARCH_HPP
 
 #include "ITabuSearch.hpp"
-#include "Neighborhood/INeighborhood.hpp"
-#include "TabuList/ITabuList.hpp"
-#include "AspirationCriteria/IAspirationCriteria.hpp"
 #include "Scheduler/Scheduler.hpp"
+#include "Solution/VectorSolution.hpp"
+#include "AspirationCriteria/BestEverAspirationCriteria.hpp"
+#include "TabuList/HashSetTabuList.hpp"
 #include <memory>
 
-template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
+template <class TNeighborhood, class TTabuList = HashSetTabuList, class TAspirationCriteria = BestEverAspirationCriteria, class TSolution = VectorSolution>
 class ParallelTabuSearch : public ITabuSearch<TSolution>
 {
 public:
@@ -26,7 +26,7 @@ public:
 
     virtual TSolution getBestSolution() override;
 
-    virtual void setStartSolution(TSolution solution) override;
+    virtual void setStartSolution(const TSolution& solution) override;
 
 private:
     TNeighborhood neighborhood;
@@ -39,9 +39,7 @@ private:
 
     std::shared_ptr<Scheduler> scheduler;
 
-    size_t block_size;
+    const size_t blockSize;
 };
-
-#include "ParallelTabuSearch-inl.hpp"
 
 #endif // PARALLELTABUSEARCH_HPP

@@ -14,17 +14,17 @@
 class Scheduler
 {
 public:
-    Scheduler(unsigned number_of_threads);
+    Scheduler(unsigned numberOfThreads = 0);
 
-    ~Scheduler();
+    virtual ~Scheduler();
 
     template<class TFunction, class... Args>
-    auto schedule(TFunction&& function, Args&&... args) -> std::future< typename std::result_of<TFunction(Args...)>::type >;
+    auto schedule(TFunction&& function, Args&&... args) -> std::future<typename std::result_of<TFunction(Args...)>::type>;
 
 private:
     std::condition_variable condition;
 
-    std::mutex queue_mutex;
+    std::mutex queueMutex;
 
     bool stop;
 
@@ -33,6 +33,26 @@ private:
     std::queue<FunctionWrapper> tasks;
 };
 
-#include "Scheduler-inl.hpp"
+template<class TFunction, class... Args>
+auto Scheduler::schedule(TFunction&& function, Args&&... args) -> std::future< typename std::result_of<TFunction(Args...)>::type >
+{
+    std::lock_guard<std::mutex> lock(queueMutex);
+
+    // don't allow enqueueing after stopping the pool
+    if (stop)
+    {
+        throw std::runtime_error("schedule on destroyed scheduler");
+    }
+
+    typedef typename std::result_of<TFunction(Args...)>::type result_type;
+
+    std::packaged_task<result_type()> task(std::bind(std::forward<TFunction>(function), std::forward<Args>(args)...));
+
+    std::future<result_type> result(task.get_future());
+    tasks.push(std::move(task));
+    condition.notify_one();
+
+    return result;
+}
 
 #endif // SCHEDULER_HPP

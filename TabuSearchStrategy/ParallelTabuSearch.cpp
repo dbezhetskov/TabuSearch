@@ -1,6 +1,3 @@
-#ifndef PARALLELTABUSEARCHINL_HPP
-#define PARALLELTABUSEARCHINL_HPP
-
 #include "ParallelTabuSearch.hpp"
 #include <utility>
 #include <algorithm>
@@ -10,8 +7,8 @@
 #include <cassert>
 #include <iostream>
 
-template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
-ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::ParallelTabuSearch
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
+ParallelTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::ParallelTabuSearch
 (
         std::shared_ptr<Scheduler>              _scheduler,
         TSolution                               &initialSolution,
@@ -25,11 +22,11 @@ ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::
     , aspirationCriteria(_aspirationCriteria)
     , bestSolution(initialSolution)
     , scheduler(_scheduler)
-    , block_size(_block_size)
+    , blockSize(_block_size)
 {}
 
-template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
-void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::run(const size_t numberOfSteps)
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
+void ParallelTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::run(const size_t numberOfSteps)
 {
     // initialize current solution
     TSolution currentSolution(bestSolution);
@@ -75,20 +72,20 @@ void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteri
         };
 
         // for each block we calculate an index of the best in the array of moves
-        size_t number_of_block = ((moves.size() + block_size) / block_size);
+        size_t number_of_block = ((moves.size() + blockSize) / blockSize);
         std::vector< std::future< std::pair<int, double> > > index_of_best_moves(number_of_block - 1);
 
         for (size_t index_of_block = 0; index_of_block + 1 < number_of_block; ++index_of_block)
         {
             index_of_best_moves[index_of_block] = scheduler->schedule(task, std::ref(tabuList), std::ref(aspirationCriteria), currentSolution,
-                                                                      std::ref(moves), index_of_block * block_size, (index_of_block + 1) * block_size);
+                                                                      std::ref(moves), index_of_block * blockSize, (index_of_block + 1) * blockSize);
         }
-        size_t last = (number_of_block - 1) * block_size + block_size;
+        size_t last = (number_of_block - 1) * blockSize + blockSize;
         if (last > moves.size())
         {
             last = moves.size();
         }
-        auto last_index = task(tabuList, aspirationCriteria, currentSolution, moves, (number_of_block - 1) * block_size, last);
+        auto last_index = task(tabuList, aspirationCriteria, currentSolution, moves, (number_of_block - 1) * blockSize, last);
 
         // choice of the best solution
         int index_of_best = -1;
@@ -152,16 +149,14 @@ void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteri
     }
 }
 
-template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
-TSolution ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::getBestSolution()
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
+TSolution ParallelTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::getBestSolution()
 {
     return bestSolution;
 }
 
-template< class TSolution, class TNeighborhood, class TTabuList, class TAspirationCriteria >
-void ParallelTabuSearch< TSolution, TNeighborhood, TTabuList, TAspirationCriteria >::setStartSolution(TSolution solution)
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
+void ParallelTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::setStartSolution(const TSolution& solution)
 {
     bestSolution = solution;
 }
-
-#endif // PARALLELTABUSEARCHINL_HPP

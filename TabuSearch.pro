@@ -21,7 +21,14 @@ SOURCES += main.cpp \
     Neighborhood/SwapNeighborhood.cpp \
     Neighborhood/RandomSwapNeighborhood.cpp \
     TabuSearchStrategy/SimpleTabuSearchReverse.cpp \
-    TabuSearchStrategy/SimpleTabuSearchReverse-impl.cpp
+    TabuSearchStrategy/SimpleTabuSearchReverse-impl.cpp \
+    TabuSearchStrategy/LandingTabuSearch.cpp \
+    TabuSearchStrategy/LandingTabuSearch-impl.cpp \
+    Scheduler/Scheduler.cpp \
+    TabuSearchStrategy/ParallelTabuSearch.cpp \
+    TabuSearchStrategy/ParallelTabuSearch-impl.cpp \
+    TabuSearchStrategy/SimpleTabuSearch.cpp \
+    TabuSearchStrategy/simpletabusearch-impl.cpp
 
 HEADERS += \
     Move/IMove.hpp \
@@ -32,7 +39,6 @@ HEADERS += \
     InitialStandardData/TaskData.hpp \
     TabuList/ITabuList.hpp \
     TabuList/HashSetTabuList.hpp \
-    TabuSearchStrategy/SimpleTabuSearch-inl.hpp \
     AspirationCriteria/IAspirationCriteria.hpp \
     AspirationCriteria/BestEverAspirationCriteria.hpp \
     Neighborhood/RandomMoveNeighborhood.hpp \
@@ -45,13 +51,10 @@ HEADERS += \
     TabuSearchStrategy/SimpleAssignmentProblemTabuSearch.hpp \
     TabuSearchStrategy/SimpleAssignmentProblemTabuSearch-inl.hpp \
     Neighborhood/UnionNeighborhood.hpp \
-    TabuSearchStrategy/ParallelTabuSearch-inl.hpp \
     TabuSearchStrategy/ParallelTabuSearch.hpp \
     Scheduler/Scheduler.hpp \
-    Scheduler/Scheduler-inl.hpp \
     Scheduler/FunctionWrapper.hpp \
     TabuSearchStrategy/LandingTabuSearch.hpp \
-    TabuSearchStrategy/LandingTabuSearch-inl.hpp \
     Neighborhood/UnionNeighborhood-inl.hpp \
     Utils/TwoDimensionalMatrix.hpp \
     Utils/ThreeDimensionalMatrix.hpp \

@@ -22,7 +22,7 @@ public:
 
     virtual TSolution getBestSolution() override;
 
-    virtual void setStartSolution(TSolution solution) override;
+    virtual void setStartSolution(const TSolution& solution) override;
 
 private:
     TNeighborhood neighborhood;
@@ -41,13 +41,11 @@ private:
             , index(_index)
         {}
 
-        bool operator < (const ObjectiveValueWithIndex& other) const { return objectiveValue < other.objectiveValue; }
+        bool operator< (const ObjectiveValueWithIndex& other) const { return objectiveValue < other.objectiveValue; }
 
         const double objectiveValue;
         const size_t index;
     };
 };
-
-#include "SimpleTabuSearch-inl.hpp"
 
 #endif // !_SIMPLE_TABU_SEARCH_H_

@@ -83,7 +83,7 @@ TSolution SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolut
 }
 
 template < class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution >
-void SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::setStartSolution(TSolution solution)
+void SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::setStartSolution(const TSolution& solution)
 {
     bestSolution = solution;
 }

@@ -37,7 +37,7 @@ int main()
     std::ios_base::sync_with_stdio(false);
 
     //========INIT========
-    const size_t MAX_STEP = 700;
+    const size_t MAX_STEP = 100;
     const size_t TENURE = 17;
 
     TaskData taskData;
@@ -48,15 +48,15 @@ int main()
     // typedef UnionNeighborhood<MoveNeighborhood, SwapNeighborhood> NeighborhoodType;
 
     MoveNeighborhood moveNeighborhood(taskData);
-    SwapNeighborhood swapNeighborhood;
+    // SwapNeighborhood swapNeighborhood;
     auto neighborhood = moveNeighborhood;
     auto tabuList = HashSetTabuList(TENURE);
     auto aspirationCriteria = BestEverAspirationCriteria(solution.getObjectiveValue());
 
-    SimpleTabuSearchReverse<MoveNeighborhood> tabu_search(solution, neighborhood, tabuList, aspirationCriteria, 10U);
+    SimpleTabuSearchReverse<MoveNeighborhood> tabuSearch(solution, neighborhood, tabuList, aspirationCriteria, 10U);
     //========INIT========
 
-    run(&tabu_search, MAX_STEP);
+    run(&tabuSearch, MAX_STEP);
 
 	return 0;
 }
@@ -83,10 +83,3 @@ void run(ITabuSearch<VectorSolution>* const tabu_search, const size_t MAX_STEP)
 //    typedef ParallelTabuSearch < VectorSolution, FirstNeighborhoodType, HashSetTabuList, BestEverAspirationCriteria > ParallelTabuSearchMoveSwap;
 
 //    ParallelTabuSearchMoveSwap tabu_search(scheduler, solution, 1000, first_neighborhood, tabu_list, aspiration_criteria);
-
-//    const size_t NUMBER_OF_LANDING = 50;
-//    const size_t DEPTH = 30;
-//    auto scheduler = std::make_shared<Scheduler>();
-//    LandingTabuSearch<VectorSolution, SimpleTabuSearchMoveSwap > tabu_search(
-//                NUMBER_OF_LANDING, DEPTH, scheduler, scout_tabu_search, solution, taskData
-//    );

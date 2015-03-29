@@ -2,47 +2,43 @@
 #define LANDINGTABUSEARCH_HPP
 
 #include "ITabuSearch.hpp"
-#include "Neighborhood/INeighborhood.hpp"
-#include "TabuList/ITabuList.hpp"
-#include "AspirationCriteria/IAspirationCriteria.hpp"
 #include "Scheduler/Scheduler.hpp"
 #include "InitialStandardData/TaskData.hpp"
+#include "Solution/VectorSolution.hpp"
 #include <memory>
 
-template< class TSolution, class TTabuSearch >
+template <class TTabuSearch, class TSolution = VectorSolution>
 class LandingTabuSearch : public ITabuSearch<TSolution>
 {
 public:
     LandingTabuSearch
     (
-            size_t                                  _number_of_landings,
-            size_t                                  _depth,
-            std::shared_ptr<Scheduler>              _scheduler,
+            const size_t                            _number_of_landings,
+            const size_t                            _depth,
+            const std::shared_ptr<Scheduler>        _scheduler,
             const TTabuSearch&                      _tabu_search,
             const TSolution&                        initialSolution,
             const TaskData&                         _data
     );
 
-    virtual void run(const size_t number_of_steps) override;
+    virtual void run(const size_t numberOfSteps) override;
 
     virtual TSolution getBestSolution() override;
 
-    virtual void setStartSolution(TSolution solution) override;
+    virtual void setStartSolution(const TSolution& solution) override;
 
 private:
     TSolution bestSolution;
 
     std::shared_ptr<Scheduler> scheduler;
 
-    size_t number_of_landings;
+    size_t numberOfLandings;
 
     size_t depth;
 
-    TTabuSearch tabu_search;
+    TTabuSearch tabuSearch;
 
     const TaskData& data;
 };
-
-#include "LandingTabuSearch-inl.hpp"
 
 #endif // LANDINGTABUSEARCH_HPP
