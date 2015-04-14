@@ -9,11 +9,17 @@
 struct TaskData
 {
 public:
-    enum TypeOperation
+    enum TypeOperation { ERASE, INSERT };
+
+    enum Color { NONE, GREEN, YELLOW, RED };
+
+    struct Disk
     {
-        ERASE,
-        INSERT
+        Disk(size_t _id, Color _color);
+        size_t serverId;
+        Color color;
     };
+
 public:
     TaskData();
 
@@ -31,7 +37,7 @@ public:
 
     size_t getNumberOfTimes() const;
 
-    std::vector<size_t> getInitialDistribution() const;
+    std::vector<Disk> getInitialDistribution() const;
 
     TwoDimensionalMatrix<double> getThresholdOverheads() const;
 
@@ -48,7 +54,7 @@ private:
     ThreeDimensionalMatrix<double> disksOverheadInsert;
     ThreeDimensionalMatrix<double> disksOverheadErase;
 
-    std::vector<size_t> initialDistribution;
+    std::vector<Disk> initialDistribution;
 
 private:
     friend std::istream& operator>>(std::istream& stream, TaskData& taskData);

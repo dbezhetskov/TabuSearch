@@ -28,7 +28,13 @@ SOURCES += main.cpp \
     TabuSearchStrategy/ParallelTabuSearch.cpp \
     TabuSearchStrategy/ParallelTabuSearch-impl.cpp \
     TabuSearchStrategy/SimpleTabuSearch.cpp \
-    TabuSearchStrategy/simpletabusearch-impl.cpp
+    Improvements/LinKernighan.cpp \
+    TabuSearchStrategy/SimpleTabuSearch-impl.cpp \
+    Neighborhood/UnionNeighborhood.cpp \
+    Neighborhood/UnionNeighborhood-impl.cpp \
+    Improvements/linkernighan-impl.cpp \
+    Reduction/RandomReduction.cpp \
+    Reduction/RandomReduction-impl.cpp
 
 HEADERS += \
     Move/IMove.hpp \
@@ -55,7 +61,10 @@ HEADERS += \
     Scheduler/Scheduler.hpp \
     Scheduler/FunctionWrapper.hpp \
     TabuSearchStrategy/LandingTabuSearch.hpp \
-    Neighborhood/UnionNeighborhood-inl.hpp \
     Utils/TwoDimensionalMatrix.hpp \
     Utils/ThreeDimensionalMatrix.hpp \
-    TabuSearchStrategy/SimpleTabuSearchReverse.hpp
+    TabuSearchStrategy/SimpleTabuSearchReverse.hpp \
+    Improvements/IImprovement.hpp \
+    Improvements/LinKernighan.hpp \
+    Reduction/IReduction.hpp \
+    Reduction/RandomReduction.hpp

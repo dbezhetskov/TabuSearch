@@ -8,7 +8,7 @@
 class HashSetTabuList : public ITabuList
 {
 public:
-    HashSetTabuList(size_t _tenure);
+    HashSetTabuList(const size_t _tenure);
 
     virtual bool isTabu(const IMove& move) const override;
 

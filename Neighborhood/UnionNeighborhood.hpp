@@ -14,10 +14,8 @@ public:
     virtual std::vector< std::unique_ptr<IMove> > getMoves(const ISolution& solution) const override;
 
 private:
-    const TFirstNeighborhood&   first_neighborhood;
-    const TSecondNeighborhood&  second_neighborhood;
+    const TFirstNeighborhood& first_neighborhood;
+    const TSecondNeighborhood& second_neighborhood;
 };
-
-#include "UnionNeighborhood-inl.hpp"
 
 #endif // UNIONNEIGHBORHOOD_HPP

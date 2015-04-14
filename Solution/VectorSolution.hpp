@@ -29,7 +29,9 @@ public:
 
     virtual double getObjectiveValue() const override;
 
-    virtual std::vector<size_t> getDistribution() const override;
+    virtual double getOverheads() const override;
+
+    virtual std::vector<TaskData::Disk> getDistribution() const override;
 
     virtual std::vector<IMove::AtomMove> getMoveHistory() const override;
 
@@ -39,7 +41,11 @@ public:
 
     size_t getServerForDisk(size_t diskId) const;
 
-    double getOverheads() const;
+    TaskData::Color getServerColor(const size_t server) const;
+
+    TaskData::Color getDiskColor(const size_t disk) const;
+
+    void paintServers();
 
 private:
 
@@ -47,6 +53,8 @@ private:
     {
         std::size_t operator()(const IMove::AtomMove& atomMove) const;
     };
+
+    typedef TaskData::Color Color;
 
 private:
     double fillObjectiveValueMatrix();
@@ -64,7 +72,7 @@ private:
 private:
     const TaskData& data;
 
-	std::vector<size_t> distribution;
+    std::vector<TaskData::Disk> distribution;
 
     ThreeDimensionalMatrix<double> matrixCapacity;
 
@@ -79,6 +87,8 @@ private:
     std::vector<IMove::AtomMove> moveHistory;
 
     double overheadsCoefficient;
+
+    std::vector<TaskData::Color> serversColor;
 };
 
 #endif // !_VECTOR_SOLUTION_H_

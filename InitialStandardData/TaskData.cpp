@@ -6,15 +6,29 @@
 
 namespace
 {
-    void readVector(std::vector<size_t>* vector, size_t size, std::istream* stream)
+    void readInitialDistribution(std::vector<TaskData::Disk>* vector, size_t size, std::istream* stream)
 	{
 		for (size_t i = 0; i < size; ++i)
 		{
             size_t value = 0;
 			*stream >> value;
             assert(0 != value);
-            vector->push_back(value - 1);
+            vector->emplace_back(value - 1, TaskData::GREEN);
 		}
+
+        (*vector)[0].color = TaskData::RED;
+        (*vector)[1].color = TaskData::RED;
+        (*vector)[2].color = TaskData::GREEN;
+
+        (*vector)[3].color = TaskData::GREEN;
+        (*vector)[4].color = TaskData::YELLOW;
+        (*vector)[5].color = TaskData::YELLOW;
+
+        (*vector)[6].color = TaskData::GREEN;
+        (*vector)[7].color = TaskData::GREEN;
+
+        (*vector)[8].color = TaskData::GREEN;
+        (*vector)[9].color = TaskData::GREEN;
 	}
 }
 
@@ -42,8 +56,7 @@ std::istream& operator>>(std::istream& stream, TaskData& taskData)
     stream >> taskData.disksCapacity; // c_{drt}
     stream >> taskData.disksOverheadInsert; // b^w_{dsr}
     stream >> taskData.disksOverheadErase; // b^e_{dsr}
-    readVector(&taskData.initialDistribution, taskData.numberOfDisks, &stream); // read initial distribution
-                                                                                // notice numbering from zero
+    readInitialDistribution(&taskData.initialDistribution, taskData.numberOfDisks, &stream); // notice numbering from zero
 	return stream;
 }
 
@@ -68,7 +81,7 @@ size_t TaskData::getNumberOfTimes() const
     return numberOfTimes;
 }
 
-std::vector<size_t> TaskData::getInitialDistribution() const
+std::vector<TaskData::Disk> TaskData::getInitialDistribution() const
 {
     return initialDistribution;
 }
@@ -102,3 +115,8 @@ double TaskData::getDiskCosts(const TypeOperation typeOperation, size_t diskId, 
     auto& overheadsDiskMatrix = (ERASE == typeOperation ? disksOverheadErase : disksOverheadInsert);
     return overheadsDiskMatrix.get(diskId, server, resource);
 }
+
+TaskData::Disk::Disk(size_t _id, Color _color)
+    : serverId(_id)
+    , color(_color)
+{}

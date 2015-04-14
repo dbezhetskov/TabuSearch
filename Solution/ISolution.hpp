@@ -5,6 +5,7 @@
 #include <vector>
 #include <utility>
 #include "Move/IMove.hpp"
+#include "InitialStandardData/TaskData.hpp"
 
 class ISolution
 {
@@ -15,6 +16,12 @@ public:
      * @return objective value this solution
      */
     virtual double getObjectiveValue() const = 0;
+
+    /**
+     * @brief get overheads
+     * @return overheads value this solution
+     */
+    virtual double getOverheads() const = 0;
 
     /**
      * @brief try on move
@@ -42,7 +49,7 @@ public:
      * @brief get distribution
      * @return vector which specifies for each disk server
      */
-    virtual std::vector<size_t> getDistribution() const = 0;
+    virtual std::vector<TaskData::Disk> getDistribution() const = 0;
 
     /**
      * @brief get move history

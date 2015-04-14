@@ -8,15 +8,15 @@ MoveNeighborhood::MoveNeighborhood(const TaskData& _data)
 std::vector<std::unique_ptr<IMove>> MoveNeighborhood::getMoves(const ISolution& solution) const
 {
     std::vector< std::unique_ptr<IMove> > result;
-    std::vector<size_t> distribution = solution.getDistribution();
+    std::vector<TaskData::Disk> distribution = solution.getDistribution();
 
     for (size_t i = 0; i < distribution.size(); ++i)
     {
         for (size_t j = 0; j < data.getNumberOfServers(); ++j)
         {
-            if (distribution[i] != j)
+            if (distribution[i].serverId != j)
             {
-                std::unique_ptr<IMove> move(new SimpleMove(j, distribution[i], i));
+                std::unique_ptr<IMove> move(new SimpleMove(j, distribution[i].serverId, i));
                 if (solution.moveIsCorrect(*move))
                 {
                     result.emplace_back(std::move(move));

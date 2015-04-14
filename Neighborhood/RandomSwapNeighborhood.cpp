@@ -5,10 +5,9 @@
 RandomSwapNeighborhood::RandomSwapNeighborhood(const TaskData &_data, size_t _numberOfAttempts)
     : data(_data)
     , numberOfAttempts(_numberOfAttempts)
-{
-}
+{}
 
-std::vector<std::unique_ptr<IMove> > RandomSwapNeighborhood::getMoves(const ISolution& solution) const
+std::vector<std::unique_ptr<IMove>> RandomSwapNeighborhood::getMoves(const ISolution& solution) const
 {
     auto distribution = solution.getDistribution();
     std::vector< std::unique_ptr<IMove> > result;
@@ -18,8 +17,8 @@ std::vector<std::unique_ptr<IMove> > RandomSwapNeighborhood::getMoves(const ISol
     for (auto pair : swapPairs)
     {
         std::vector<IMove::AtomMove> AtomMoves;
-        AtomMoves.emplace_back(distribution[pair.second], distribution[pair.first], pair.first);
-        AtomMoves.emplace_back(distribution[pair.first], distribution[pair.second], pair.second);
+        AtomMoves.emplace_back(distribution[pair.second].serverId, distribution[pair.first].serverId, pair.first);
+        AtomMoves.emplace_back(distribution[pair.first].serverId, distribution[pair.second].serverId, pair.second);
         std::unique_ptr<IMove> move(new CompoundMove(std::move(AtomMoves)));
         if (solution.moveIsCorrect(*move))
         {
@@ -47,7 +46,7 @@ std::vector< std::pair<size_t, size_t> > RandomSwapNeighborhood::getSomePairDisk
             diskId1 = rand() % data.getNumberOfDisks();
             diskId2 = rand() % data.getNumberOfDisks();
         }
-        while (distribution[diskId1] == distribution[diskId2] && !used[diskId1 * data.getNumberOfDisks() + diskId2]);
+        while (distribution[diskId1].serverId == distribution[diskId2].serverId && !used[diskId1 * data.getNumberOfDisks() + diskId2]);
 
         used[diskId1 * data.getNumberOfDisks() + diskId2] = true;
 

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
-template < class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution >
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
 SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::SimpleTabuSearch
 (
         const TSolution&                        _initSolution,
@@ -18,49 +18,23 @@ SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::Simp
 {
 }
 
-template < class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution >
-void SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::run(const size_t numbersOfSteps)
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
+void SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::run(const size_t numberOfSteps)
 {
-    // initialize current solution
     TSolution currentSolution(bestSolution);
 
-    for (size_t i = 0; i < numbersOfSteps; ++i)
+    for (size_t i = 0; i < numberOfSteps; ++i)
 	{
-        auto moves = neighborhood.getMoves(currentSolution);
+        auto bestLocalMovePtr = getBestMove(currentSolution);
 
-        if (moves.empty())
+        if (nullptr == bestLocalMovePtr)
         {
-            std::cout << "Moves exhaustion, return in bestSolution" << '\n';
-            currentSolution = bestSolution;
             continue;
         }
 
-        std::vector<ObjectiveValueWithIndex> objectiveValuesWithIndex;
-        // generate all (non tabu and !aspiration) solutions from the current
-        for (size_t i = 0; i < moves.size(); ++i)
-        {
-            if (!tabuList.isTabu(*moves[i]) || aspirationCriteria.overrideTabu(currentSolution, *moves[i]))
-            {
-                objectiveValuesWithIndex.emplace_back(currentSolution.tryOnMove(*moves[i]), i);
-            }
-        }
+        currentSolution.applyMove(*bestLocalMovePtr);
 
-        if (objectiveValuesWithIndex.empty())
-        {
-            std::cout << "All solution tabu!" << '\n';
-            continue;
-        }
-
-        // choice of the best solution
-        auto localBestObjectiveValue = std::min_element(objectiveValuesWithIndex.begin(), objectiveValuesWithIndex.end());
-        const auto& localBestMove = *moves[localBestObjectiveValue->index];
-
-        // apply move
-        currentSolution.applyMove(localBestMove);
-
-        std::cout << localBestObjectiveValue->objectiveValue << '\n';
-
-        if (localBestObjectiveValue->objectiveValue <= bestSolution.getObjectiveValue())
+        if (currentSolution.getObjectiveValue() <= bestSolution.getObjectiveValue())
         {
             bestSolution = currentSolution;
         }
@@ -70,13 +44,12 @@ void SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>:
             break;
         }
 
-        // update tabuList and AspirationCriteria
-        tabuList.update(localBestMove);
+        tabuList.update(*bestLocalMovePtr);
         aspirationCriteria.update(currentSolution);
 	}
 }
 
-template < class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution >
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
 TSolution SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::getBestSolution()
 {
     return bestSolution;
@@ -86,4 +59,55 @@ template < class TNeighborhood, class TTabuList, class TAspirationCriteria, clas
 void SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::setStartSolution(const TSolution& solution)
 {
     bestSolution = solution;
+}
+
+namespace
+{
+
+struct ObjectiveValueWithIndex
+{
+    ObjectiveValueWithIndex(double _objectiveValue, size_t _index)
+        : objectiveValue(_objectiveValue)
+        , index(_index)
+    {}
+
+    bool operator< (const ObjectiveValueWithIndex& other) const { return objectiveValue < other.objectiveValue; }
+
+    const double objectiveValue;
+    const size_t index;
+};
+
+}
+
+template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
+std::unique_ptr<IMove> SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::getBestMove(const TSolution& currentSolution)
+{
+    auto moves = neighborhood.getMoves(currentSolution);
+
+    if (moves.empty())
+    {
+        std::cout << "Moves exhaustion" << '\n';
+        return nullptr;
+    }
+
+    // generate all (non Tabu(X) or Aspiration(X)) moves from the current
+    std::vector<ObjectiveValueWithIndex> objectiveValuesWithIndex;
+    for (size_t i = 0; i < moves.size(); ++i)
+    {
+        IMove& move = *moves[i];
+        if (!tabuList.isTabu(move) || aspirationCriteria.overrideTabu(currentSolution, move))
+        {
+            objectiveValuesWithIndex.emplace_back(currentSolution.tryOnMove(move), i);
+        }
+    }
+
+    if (objectiveValuesWithIndex.empty())
+    {
+        std::cout << "All solution tabu!" << '\n';
+        return nullptr;
+    }
+
+    // choice of the best move
+    auto bestObjectiveValue = std::min_element(objectiveValuesWithIndex.begin(), objectiveValuesWithIndex.end());
+    return std::move(moves[bestObjectiveValue->index]);
 }

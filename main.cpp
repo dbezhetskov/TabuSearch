@@ -16,6 +16,9 @@
 // TABU LISTS
 #include "TabuList/HashSetTabuList.hpp"
 
+// REDUCER
+#include "Reduction/RandomReduction.hpp"
+
 // NEIGHBORHOODS
 #include "Neighborhood/MoveNeighborhood.hpp"
 #include "Neighborhood/RandomMoveNeighborhood.hpp"
@@ -23,12 +26,18 @@
 #include "Neighborhood/RandomSwapNeighborhood.hpp"
 #include "Neighborhood/UnionNeighborhood.hpp"
 
+// IMPROVEMENTS
+#include "Improvements/LinKernighan.hpp"
+
 #include <iostream>
 #include <utility>
 #include <thread>
 #include <chrono>
 
-static void run(ITabuSearch<VectorSolution>* const tabu_search, const size_t MAX_STEP);
+namespace
+{
+void run(ITabuSearch<VectorSolution>* const tabu_search, const size_t MAX_STEP);
+}
 
 #include "Move/SimpleMove.hpp"
 
@@ -37,7 +46,7 @@ int main()
     std::ios_base::sync_with_stdio(false);
 
     //========INIT========
-    const size_t MAX_STEP = 100;
+    const size_t MAX_STEP = 500;
     const size_t TENURE = 17;
 
     TaskData taskData;
@@ -45,21 +54,35 @@ int main()
 
     VectorSolution solution(taskData, 0);
 
+    RandomReduction<VectorSolution> reductor(taskData);
+    solution = reductor.reduce(solution);
+
     // typedef UnionNeighborhood<MoveNeighborhood, SwapNeighborhood> NeighborhoodType;
 
     MoveNeighborhood moveNeighborhood(taskData);
     // SwapNeighborhood swapNeighborhood;
-    auto neighborhood = moveNeighborhood;
+    // auto neighborhood = NeighborhoodType(moveNeighborhood, swapNeighborhood);
     auto tabuList = HashSetTabuList(TENURE);
     auto aspirationCriteria = BestEverAspirationCriteria(solution.getObjectiveValue());
 
-    SimpleTabuSearchReverse<MoveNeighborhood> tabuSearch(solution, neighborhood, tabuList, aspirationCriteria, 10U);
+    auto improverNeighborhood = RandomMoveNeighborhood(taskData, 1000U);
+    auto improver = LinKernighan<RandomMoveNeighborhood>(improverNeighborhood, 50);
+
+    SimpleTabuSearchReverse<MoveNeighborhood, LinKernighan<RandomMoveNeighborhood>>
+            tabu_search(solution, moveNeighborhood, tabuList, aspirationCriteria, improver, 10U);
+
+//    auto scheduler = std::make_shared<Scheduler>();
+//    LandingTabuSearch<SimpleTabuSearchReverse<MoveNeighborhood, LinKernighan<RandomMoveNeighborhood>>> tabuSearch
+//            (10, 30, scheduler, scout_tabu_search, solution, taskData);
     //========INIT========
 
-    run(&tabuSearch, MAX_STEP);
+    run(&tabu_search, MAX_STEP);
 
 	return 0;
 }
+
+namespace
+{
 
 void run(ITabuSearch<VectorSolution>* const tabu_search, const size_t MAX_STEP)
 {
@@ -71,6 +94,8 @@ void run(ITabuSearch<VectorSolution>* const tabu_search, const size_t MAX_STEP)
 
     std::cout << "\n Time: " << std::chrono::duration_cast< std::chrono::seconds >(end - start).count() << '\n' << '\n';
     std::cout << tabu_search->getBestSolution() << '\n';
+}
+
 }
 
 

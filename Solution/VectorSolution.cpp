@@ -24,8 +24,10 @@ VectorSolution::VectorSolution(const TaskData& _data, const double _overheadsCoe
     , objectiveValue(0)
     , overheads(0)
     , overheadsCoefficient(_overheadsCoefficient)
+    , serversColor(_data.getNumberOfServers(), Color::NONE)
 {
     objectiveValue = fillObjectiveValueMatrix();
+    paintServers();
 }
 
 VectorSolution::VectorSolution(const VectorSolution& other)
@@ -37,6 +39,7 @@ VectorSolution::VectorSolution(const VectorSolution& other)
     , overheads(other.overheads)
     , moveHistory(other.moveHistory)
     , overheadsCoefficient(other.overheadsCoefficient)
+    , serversColor(other.serversColor)
 {}
 
 void VectorSolution::swap(VectorSolution &other)
@@ -48,6 +51,7 @@ void VectorSolution::swap(VectorSolution &other)
     std::swap(overheadsCoefficient, other.overheadsCoefficient);
     std::swap(matrixCapacity, other.matrixCapacity);
     moveHistory.swap(other.moveHistory);
+    serversColor.swap(other.serversColor);
 }
 
 VectorSolution& VectorSolution::operator=(const VectorSolution& rhs)
@@ -139,7 +143,7 @@ double VectorSolution::getOverheads( const IMove::AtomMove& atomMove,
     }
     else
     {
-        // save inverse atomMove
+        // save inverse atom move
         appliedMoves->emplace(atomMove.source, atomMove.destination, atomMove.diskId);
     }
 
@@ -154,34 +158,42 @@ double VectorSolution::getOverheads() const
 bool VectorSolution::moveIsCorrect(const IMove &move) const
 {
     // fast fix
-    return true;
-
-    bool correct = true;
-
-    // work with copy, don't change current state
-    auto appliedMovesCopy = appliedMoves;
-    auto thresholdOverheadsServerCopy = thresholdOverheadsServer;
-    auto overheadsCopy = overheads;
-
-    for (auto atomMove : move.getAtomMove())
+    auto atomMoves = move.getAtomMove();
+    if (atomMoves.size() == 2) // swap move
     {
-        assert(atomMove.source != atomMove.destination);
-        assert(atomMove.source == distribution[atomMove.diskId]);
-
-        if (0 != getOverheads(atomMove, &appliedMovesCopy, &thresholdOverheadsServerCopy, overheadsCopy))
+        IMove::AtomMove& atomMove1 = atomMoves[0];
+        IMove::AtomMove& atomMove2 = atomMoves[1];
+        if (
+                (distribution[atomMove1.diskId].color == Color::RED && distribution[atomMove2.diskId].color == Color::RED)
+                || (distribution[atomMove1.diskId].color == Color::YELLOW && distribution[atomMove2.diskId].color == Color::YELLOW)
+           )
         {
-            correct = false;
-            break;
+            return true;
         }
     }
 
-    return correct;
+    for (auto atomMove : atomMoves)
+    {
+        assert(atomMove.source != atomMove.destination);
+        assert(atomMove.source == distribution[atomMove.diskId].serverId);
+
+        if (distribution[atomMove.diskId].color == Color::YELLOW && serversColor[atomMove.destination] == Color::YELLOW)
+        {
+            return false;
+        }
+        else if (distribution[atomMove.diskId].color == Color::RED)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 double VectorSolution::tryOnAtomMove(ThreeDimensionalMatrix<double> *matrixCapacity, double startObjectiveValue, const IMove::AtomMove& atomMove) const
 {
     assert(atomMove.source != atomMove.destination);
-    assert(atomMove.source == distribution[atomMove.diskId]);
+    assert(atomMove.source == distribution[atomMove.diskId].serverId);
     assert(atomMove.source < data.getNumberOfServers() && atomMove.destination < data.getNumberOfServers());
 
     if (atomMove.source == atomMove.destination)
@@ -240,7 +252,7 @@ double VectorSolution::tryOnMove(const IMove& move) const
     for (auto atomMove : move.getAtomMove())
     {
         assert(atomMove.source != atomMove.destination);
-        assert(atomMove.source == distribution[atomMove.diskId]);
+        assert(atomMove.source == distribution[atomMove.diskId].serverId);
         assert(atomMove.source < data.getNumberOfServers() && atomMove.destination < data.getNumberOfServers());
 
         double newObjectiveValue = tryOnAtomMove(&matrixCapacityCopy, objectiveValueCopy, atomMove);
@@ -257,7 +269,7 @@ void VectorSolution::applyMove(const IMove& move)
     for (const auto atomMove : move.getAtomMove())
     {
         assert(atomMove.source != atomMove.destination);
-        assert(atomMove.source == distribution[atomMove.diskId]);
+        assert(atomMove.source == distribution[atomMove.diskId].serverId);
         assert(atomMove.source < data.getNumberOfServers() && atomMove.destination < data.getNumberOfServers());
 
         moveHistory.push_back(atomMove);
@@ -269,7 +281,7 @@ void VectorSolution::applyMove(const IMove& move)
         moveDisk(atomMove.destination, atomMove.source, atomMove.diskId);
     }
 
-    std::cout << objectiveValue << " overheads " << (overheads) << std::endl;
+    // std::cout << objectiveValue << " overheads " << (overheads) << std::endl;
 }
 
 double VectorSolution::getObjectiveValue() const
@@ -296,7 +308,7 @@ double VectorSolution::fillObjectiveValueMatrix()
         {
             for (size_t resource = 0; resource < data.getNumberOfResource(); ++resource)
             {
-                matrixCapacity.get(distribution[diskId], time, resource) += data.getCapacity(diskId, resource, time);
+                matrixCapacity.get(distribution[diskId].serverId, time, resource) += data.getCapacity(diskId, resource, time);
             }
         }
     }
@@ -321,11 +333,11 @@ double VectorSolution::fillObjectiveValueMatrix()
 
 void VectorSolution::moveDisk(size_t destination, size_t source, size_t diskId)
 {
-    assert(distribution[diskId] == source);
-    distribution[diskId] = destination;
+    assert(distribution[diskId].serverId == source);
+    distribution[diskId].serverId = destination;
 }
 
-std::vector<size_t> VectorSolution::getDistribution() const
+std::vector<TaskData::Disk> VectorSolution::getDistribution() const
 {
     return distribution;
 }
@@ -348,7 +360,47 @@ double VectorSolution::getOverheadsCoefficient()
 size_t VectorSolution::getServerForDisk(size_t diskId) const
 {
     assert(diskId < distribution.size());
-    return distribution[diskId];
+    return distribution[diskId].serverId;
+}
+
+TaskData::Color VectorSolution::getServerColor(const size_t server) const
+{
+    assert(server < data.getNumberOfServers());
+    return serversColor[server];
+}
+
+TaskData::Color VectorSolution::getDiskColor(const size_t disk) const
+{
+    assert(disk < distribution.size());
+    return distribution[disk].color;
+}
+
+void VectorSolution::paintServers()
+{
+    for (size_t diskId = 0; diskId < data.getNumberOfDisks(); ++diskId)
+    {
+        switch (distribution[diskId].color)
+        {
+        case Color::RED:
+            serversColor[distribution[diskId].serverId] = Color::RED;
+            break;
+        case Color::YELLOW:
+            if (serversColor[distribution[diskId].serverId] != Color::RED)
+            {
+                serversColor[distribution[diskId].serverId] = Color::YELLOW;
+            }
+            break;
+        case Color::GREEN:
+            if (serversColor[distribution[diskId].serverId] == Color::NONE)
+            {
+                serversColor[distribution[diskId].serverId] = Color::GREEN;
+            }
+            break;
+        default:
+            assert(false);
+            break;
+        }
+    }
 }
 
 std::ostream& operator<<(std::ostream& outStream, const VectorSolution& solution)
@@ -359,7 +411,7 @@ std::ostream& operator<<(std::ostream& outStream, const VectorSolution& solution
     auto distribution = solution.getDistribution();
     for (auto server : distribution)
     {
-        outStream << server + 1 << ' ';
+        outStream << server.serverId + 1 << ' ';
     }
     outStream << '\n';
 

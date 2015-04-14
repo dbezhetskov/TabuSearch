@@ -17,7 +17,7 @@ std::vector<std::unique_ptr<IMove> > RandomMoveNeighborhood::getMoves(const ISol
     auto moves = getSomeMoves(solution);
     for (auto pair : moves)
     {
-        std::unique_ptr<IMove> move(new SimpleMove(pair.second, distribution[pair.first], pair.first));
+        std::unique_ptr<IMove> move(new SimpleMove(pair.second, distribution[pair.first].serverId, pair.first));
         if (solution.moveIsCorrect(*move))
         {
             result.emplace_back(std::move(move));
@@ -36,7 +36,7 @@ std::vector< std::pair<size_t, size_t> > RandomMoveNeighborhood::getSomeMoves(co
     {
         size_t diskId = rand() % distribution.size();
         size_t destination = rand() % data.getNumberOfServers();
-        if (distribution[diskId] != destination)
+        if (distribution[diskId].serverId != destination)
         {
             result.emplace_back(diskId, destination);
         }

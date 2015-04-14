@@ -9,10 +9,9 @@ std::size_t HashSetTabuList::AtomMoveHash::operator()(const IMove::AtomMove& ato
     return result;
 }
 
-HashSetTabuList::HashSetTabuList(size_t _tenure)
+HashSetTabuList::HashSetTabuList(const size_t _tenure)
     : tenure(_tenure)
-{
-}
+{}
 
 void HashSetTabuList::clear()
 {
@@ -41,11 +40,6 @@ void HashSetTabuList::update(const IMove& decisionMove)
         {
             tabuList[inverseMove] = 0;
         }
-
-//        if (tabuList.end() == tabuList.find(atomMove))
-//        {
-//            tabuList[atomMove] = 0;
-//        }
     }
 
     for (auto itr = tabuList.begin(); itr != tabuList.end(); )

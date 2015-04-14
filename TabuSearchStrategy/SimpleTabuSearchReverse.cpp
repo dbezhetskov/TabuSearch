@@ -4,25 +4,23 @@
 #include <memory>
 #include <iostream>
 
-template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
-SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::SimpleTabuSearchReverse
+template <class TNeighborhood, class TImprovement, class TTabuList, class TAspirationCriteria, class TSolution>
+SimpleTabuSearchReverse<TNeighborhood, TImprovement, TTabuList, TAspirationCriteria, TSolution>::SimpleTabuSearchReverse
 (
         const TSolution&                        _initSolution,
         const TNeighborhood&                    _neighborhood,
         const TTabuList&                        _tabuList,
         const TAspirationCriteria&              _aspirationCriteria,
+        const TImprovement&                     _improver,
         const size_t                            _numberOfUnchanged
 )
-    : neighborhood(_neighborhood)
-    , tabuList(_tabuList)
-    , aspirationCriteria(_aspirationCriteria)
-    , bestSolution(_initSolution)
+    : SimpleTabuSearch<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>(_initSolution, _neighborhood, _tabuList, _aspirationCriteria)
+    , improver(_improver)
     , numberOfUnchanged(_numberOfUnchanged)
-{
-}
+{}
 
-template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
-void SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::run(const size_t numberOfSteps)
+template <class TNeighborhood, class TImprovement, class TTabuList, class TAspirationCriteria, class TSolution>
+void SimpleTabuSearchReverse<TNeighborhood, TImprovement, TTabuList, TAspirationCriteria, TSolution>::run(const size_t numberOfSteps)
 {
     bool isMoveUp = false;
     TSolution currentSolution(bestSolution);
@@ -30,6 +28,8 @@ void SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSol
 
     for (size_t i = 0; i < numberOfSteps; ++i)
     {
+        std::cout << "Number of move " << i << std::endl;
+
         auto bestLocalMovePtr = getBestMove(currentSolution);
 
         if (nullptr == bestLocalMovePtr)
@@ -41,7 +41,7 @@ void SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSol
         currentSolution.applyMove(*bestLocalMovePtr);
 
         ++currentNumberOfUnchanged;
-        std::cout << "number of unchanhed " << currentNumberOfUnchanged << std::endl;
+        // std::cout << "number of unchanged " << currentNumberOfUnchanged << std::endl;
 
         if (currentSolution.getObjectiveValue() <= bestSolution.getObjectiveValue())
         {
@@ -49,15 +49,15 @@ void SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSol
             currentNumberOfUnchanged = 0;
         }
 
-        if (numberOfUnchanged <= currentNumberOfUnchanged)
+        if (i >= 50)
         {
             isMoveUp = true;
         }
 
+        double overheadsCoefficient = currentSolution.getOverheadsCoefficient() + 0.1;
         if (isMoveUp)
         {
             std::cout << "MOVE UP!!!" << std::endl;
-            double overheadsCoefficient = currentSolution.getOverheadsCoefficient() + 0.1;
             currentSolution.setOverheadsCoefficient(overheadsCoefficient);
             bestSolution.setOverheadsCoefficient(overheadsCoefficient);
         }
@@ -72,67 +72,4 @@ void SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSol
         tabuList.update(*bestLocalMovePtr);
         aspirationCriteria.update(currentSolution);
     }
-}
-
-template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
-TSolution SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::getBestSolution()
-{
-    return bestSolution;
-}
-
-template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
-void SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::setStartSolution(const TSolution &solution)
-{
-    bestSolution = solution;
-}
-
-namespace
-{
-
-struct ObjectiveValueWithIndex
-{
-    ObjectiveValueWithIndex(double _objectiveValue, size_t _index)
-        : objectiveValue(_objectiveValue)
-        , index(_index)
-    {}
-
-    bool operator< (const ObjectiveValueWithIndex& other) const { return objectiveValue < other.objectiveValue; }
-
-    const double objectiveValue;
-    const size_t index;
-};
-
-}
-
-template <class TNeighborhood, class TTabuList, class TAspirationCriteria, class TSolution>
-std::unique_ptr<IMove> SimpleTabuSearchReverse<TNeighborhood, TTabuList, TAspirationCriteria, TSolution>::getBestMove(const TSolution& currentSolution)
-{
-    auto moves = neighborhood.getMoves(currentSolution);
-
-    if (moves.empty())
-    {
-        std::cout << "Moves exhaustion" << '\n';
-        return nullptr;
-    }
-
-    // generate all (non Tabu(X) or Aspiration(X)) moves from the current
-    std::vector<ObjectiveValueWithIndex> objectiveValuesWithIndex;
-    for (size_t i = 0; i < moves.size(); ++i)
-    {
-        IMove& move = *moves[i];
-        if (!tabuList.isTabu(move) || aspirationCriteria.overrideTabu(currentSolution, move))
-        {
-            objectiveValuesWithIndex.emplace_back(currentSolution.tryOnMove(move), i);
-        }
-    }
-
-    if (objectiveValuesWithIndex.empty())
-    {
-        std::cout << "All solution tabu!" << '\n';
-        return nullptr;
-    }
-
-    // choice of the best move
-    auto bestObjectiveValue = std::min_element(objectiveValuesWithIndex.begin(), objectiveValuesWithIndex.end());
-    return std::move(moves[bestObjectiveValue->index]);
 }

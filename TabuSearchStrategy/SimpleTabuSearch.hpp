@@ -6,7 +6,7 @@
 #include "TabuList/HashSetTabuList.hpp"
 #include "AspirationCriteria/BestEverAspirationCriteria.hpp"
 
-template < class TNeighborhood, class TTabuList = HashSetTabuList, class TAspirationCriteria = BestEverAspirationCriteria, class TSolution = VectorSolution >
+template <class TNeighborhood, class TTabuList = HashSetTabuList, class TAspirationCriteria = BestEverAspirationCriteria, class TSolution = VectorSolution>
 class SimpleTabuSearch : public ITabuSearch<TSolution>
 {
 public:
@@ -18,13 +18,16 @@ public:
             const TAspirationCriteria&              _aspirationCriteria
     );
 
-    virtual void run(const size_t numbersOfSteps) override;
+    virtual void run(const size_t numberOfSteps) override;
 
     virtual TSolution getBestSolution() override;
 
     virtual void setStartSolution(const TSolution& solution) override;
 
-private:
+protected:
+    std::unique_ptr<IMove> getBestMove(const TSolution &currentSolution);
+
+protected:
     TNeighborhood neighborhood;
 
     TTabuList tabuList;
@@ -32,20 +35,6 @@ private:
     TAspirationCriteria aspirationCriteria;
 
     TSolution bestSolution;
-
-private:
-    struct ObjectiveValueWithIndex
-    {
-        ObjectiveValueWithIndex(double _objectiveValue, size_t _index)
-            : objectiveValue(_objectiveValue)
-            , index(_index)
-        {}
-
-        bool operator< (const ObjectiveValueWithIndex& other) const { return objectiveValue < other.objectiveValue; }
-
-        const double objectiveValue;
-        const size_t index;
-    };
 };
 
 #endif // !_SIMPLE_TABU_SEARCH_H_

@@ -1,15 +1,12 @@
-#ifndef UNIONNEIGHBORHOODINL_HPP
-#define UNIONNEIGHBORHOODINL_HPP
-
 #include "UnionNeighborhood.hpp"
 
-template< class TFirstNeighborhood, class TSecondNeighborhood >
-UnionNeighborhood< TFirstNeighborhood, TSecondNeighborhood >::UnionNeighborhood(const TFirstNeighborhood& first, const TSecondNeighborhood& second)
+template <class TFirstNeighborhood, class TSecondNeighborhood>
+UnionNeighborhood<TFirstNeighborhood, TSecondNeighborhood >::UnionNeighborhood(const TFirstNeighborhood& first, const TSecondNeighborhood& second)
     : first_neighborhood(first)
     , second_neighborhood(second)
 {}
 
-template< class TFirstNeighborhood, class TSecondNeighborhood >
+template <class TFirstNeighborhood, class TSecondNeighborhood>
 std::vector< std::unique_ptr<IMove> > UnionNeighborhood< TFirstNeighborhood, TSecondNeighborhood >::getMoves(const ISolution& solution) const
 {
     std::vector< std::unique_ptr<IMove> > all_moves;
@@ -22,5 +19,3 @@ std::vector< std::unique_ptr<IMove> > UnionNeighborhood< TFirstNeighborhood, TSe
 
     return all_moves;
 }
-
-#endif // UNIONNEIGHBORHOODINL_HPP
